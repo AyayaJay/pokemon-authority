@@ -228,7 +228,7 @@ class Battle {
     const side = this.sides.indexOf(s);
     s.active = idx; const m = s.mons[idx]; m.resetVolatile(); m.leaving = false; this.fainting = this.fainting.filter(x => x !== m);
     m.x = side === 0 ? ARENA.x + 620 : ARENA.x + ARENA.w - 620; m.y = ARENA.y + ARENA.h / 2 + rnd(-60, 60); m.vx = m.vy = 0; m.mode = null;
-    m.cd = 0.25 + this.actionDelay(m) * 0.45; m.flashT = 0.4;
+    m.cd = clamp(0.25 + 60 / Math.max(1, m.stat('spe')), 0.3, 1.6); m.flashT = 0.4;
     this.addFx({kind: 'ball', x: m.x, y: m.y, t: 0, life: 0.45, color: '#fff'});
     if (!first) this.say(spName(m.sp) + '!');
     if (m.set.shiny) for (let i = 0; i < 10; i++) this.addFx({kind: 'shine', x: m.x + rnd(-50, 50), y: m.y + rnd(-60, 30), t: -i * 0.07, life: 0.6});
@@ -346,7 +346,6 @@ class Battle {
     if (mv.f && mv.f.includes('ch') && !(mv.id === 'solarbeam' || mv.id === 'solarblade') ) wind += 0.9;
     if ((mv.id === 'solarbeam' || mv.id === 'solarblade') && this.weather !== 'sunnyday') wind += 0.9;
     let pr = mv.pr; if (m.hasAbility('prankster') && mv.c === 'X') pr += 1;
-    wind *= this.speedFactor(m);
     if (pr > 0) wind = 0.02; if (pr < 0) wind += 0.4;
     const range = del === 'melee' ? 0 : del === 'beam' ? 460 : del === 'aoe' ? 190 : del === 'field' ? 9999 : 400;
     return {del, wind, pr, range};
@@ -479,7 +478,7 @@ class Battle {
     if (m.status === 'slp' || m.status === 'frz') { this.drive(m, f, 0, 0, dt, 1, true); return; }
     const spe = m.stat('spe');
     const heavy = (m.sp.w || 50) > 250 ? 0.8 : 1;
-    const mvSpd = clamp(90 + spe * 0.6, 90, 300) * (m.dmaxT > 0 ? 0.6 : 1) * heavy;
+    const mvSpd = clamp(60 + spe * 0.9, 60, 380) * (m.dmaxT > 0 ? 0.6 : 1) * heavy;
     const agi = clamp(0.6 + spe / 200, 0.6, 1.8);
     const d = dist(m, f), toF = Math.atan2(f.y - m.y, f.x - m.x);
     const ux = Math.cos(toF), uy = Math.sin(toF), px = -uy * m.strafe, py = ux * m.strafe;
@@ -644,7 +643,7 @@ class Battle {
     }
     if (mv.rc && !mv.god) { m.stunT = 1.6; this.float(m, T('recharge'), '#ccc'); }
   }
-  actionDelay(m) { const spe = Math.max(1, m.stat('spe')); return clamp(1.8 * Math.pow(100 / spe, 0.6), 0.55, 3.4); }
+  actionDelay(m) { return 1.6; }   // same attack rate for everyone; Speed affects movement instead
   speedFactor(m) { return clamp(Math.pow(120 / Math.max(1, m.stat('spe')), 0.5), 0.55, 1.6); }
   updateProjs(dt) {
     for (const p of this.projs) {
