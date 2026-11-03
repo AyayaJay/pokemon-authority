@@ -1197,8 +1197,8 @@ function drawMon(b, m) {
   let sz = m.renderSize * (sv ? clamp(sv.scale, 0.2, 3) : 1); const frozen = b.timeStopT > 0 && m.side === 1;
   // shadow
   ctx.fillStyle = (m.fainted || m.leaving) ? 'rgba(0,0,0,' + (0.28 * (1 - clamp((m.faintT - 1.4) / 0.3, 0, 1))) + ')' : 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(m.x, m.y + sz * 0.22, sz * 0.32, sz * 0.11, 0, 0, Math.PI * 2); ctx.fill();
-  if (m.god) { ctx.fillStyle = 'rgba(255,215,0,0.18)'; ctx.beginPath(); ctx.arc(m.x, m.y, sz * 0.6 + Math.sin(performance.now() / 200) * 4, 0, Math.PI * 2); ctx.fill(); }
   let filt = [];
+  if (m.set.shiny && m.sp.base === 'arceus') filt.push('sepia(1) saturate(2.6) hue-rotate(-8deg) brightness(1.08)');
   if (frozen) filt.push('grayscale(1)');
   if (m.flashT > 0 && Math.floor(m.flashT * 20) % 2 === 0) filt.push('brightness(2.2)');
   if (m.tera) filt.push('drop-shadow(0 0 6px ' + TYPE_COLOR[m.tera] + ')');
