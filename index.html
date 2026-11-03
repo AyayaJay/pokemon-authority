@@ -1898,12 +1898,20 @@ function openPicker(cb) {
   const list = el('div', {className: 'plist'});
   const inp = el('input', {placeholder: tr('Search name or dex # (English / 한글)', '이름 또는 도감번호 검색 (한글/English)'), on: {input: () => fill()}});
   const close = () => ov.remove();
+  let res = [], shown = 0;
+  const more = () => {
+    const end = Math.min(res.length, shown + 90);
+    for (; shown < end; shown++) { const s = res[shown]; list.append(el('div', {className: 'pitem', on: {click: () => { close(); cb(s.id); }}},
+      el('img', {loading: 'lazy', className: 'pport', src: portraitURL(s.pmd && s.pmd.pt ? s : (SP[s.base] && SP[s.base].pmd && SP[s.base].pmd.pt ? SP[s.base] : s), false), on: {error: e => { const t = e.target, st = +(t.dataset.st || 0); t.dataset.st = st + 1; const bs = SP[s.base] || s; const alt = [SD_URL + 'gen5/' + (s.sd || s.id) + '.png', SD_URL + 'dex/' + (s.sd || s.id) + '.png', SD_URL + 'gen5/' + (bs.sd || bs.id) + '.png']; if (st < alt.length) { t.src = alt[st]; t.classList.remove('pport'); } else t.style.visibility = 'hidden'; }}}),
+      el('span', {}, '#' + s.num + ' ' + spName(s)))); }
+  };
   function fill() {
-    const q = inp.value.trim().toLowerCase(); list.innerHTML = '';
-    const res = PICKABLE.filter(s => !q || s.n.toLowerCase().includes(q) || s.ko.includes(q) || String(s.num) === q).slice(0, 120);
-    for (const s of res) list.append(el('div', {className: 'pitem', on: {click: () => { close(); cb(s.id); }}},
-      el('img', {loading: 'lazy', className: 'pport', src: portraitURL(s.pmd && s.pmd.pt ? s : (SP[s.base] && SP[s.base].pmd && SP[s.base].pmd.pt ? SP[s.base] : s), false), on: {error: e => { const t = e.target, st = +(t.dataset.st || 0); t.dataset.st = st + 1; const bs = SP[s.base] || s; const alt = [SD_URL + 'gen5/' + (s.sd || s.id) + '.png', SD_URL + 'dex/' + (s.sd || s.id) + '.png', SD_URL + 'gen5/' + (bs.sd || bs.id) + '.png']; if (st < alt.length) { t.src = alt[st]; t.classList.remove('pport'); } else t.style.visibility = 'hidden'; }}}), el('span', {}, '#' + s.num + ' ' + spName(s))));
+    const q = inp.value.trim().toLowerCase(); list.innerHTML = ''; shown = 0;
+    res = PICKABLE.filter(s => !q || s.n.toLowerCase().includes(q) || s.ko.includes(q) || String(s.num) === q);
+    more();
   }
+  // keep loading as you scroll down (all 1,025 Pokémon and their forms)
+  list.addEventListener('scroll', () => { if (list.scrollTop + list.clientHeight > list.scrollHeight - 400) more(); });
   box.append(el('div', {className: 'row'}, inp, el('button', {on: {click: close}}, '✕')), list);
   ov.append(box); ov.addEventListener('click', e => { if (e.target === ov) close(); });
   document.body.append(ov); fill(); inp.focus();
