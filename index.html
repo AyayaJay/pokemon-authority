@@ -177,7 +177,7 @@ class Mon {
     const newMax = Math.floor((2 * b[0] + 31 + 21) * L / 100) + L + 10;
     if (init) this.maxhp = newMax;
     this.stats = {atk: st(b[1]), def: st(b[2]), spa: st(b[3]), spd: st(b[4]), spe: st(b[5])};
-    this.size = sizeFor(sp.h); this.god = godKind(sp);
+    this.size = sp.fm === 'Eternamax' ? ARENA.w / 2 : sizeFor(sp.h); this.god = godKind(sp);   // Eternamax: about half the field
     if (!init) this.ability = toID(sp.ab[0]);
     this.sprite = getSprite(sp.id, this.set.shiny);
   }
@@ -189,7 +189,7 @@ class Mon {
     this.statusTick = 0; this.toxN = 1; this.zNext = false; this.strafe = Math.random() < 0.5 ? 1 : -1;
   }
   get radius() { return this.renderSize * 0.32; }
-  get renderSize() { return clamp(this.size * (this.dmaxT > 0 ? 1.7 : 1), 32, 950); }
+  get renderSize() { return clamp(this.size * (this.dmaxT > 0 ? 1.7 : 1), 32, Math.max(950, this.size)); }
   get teraTypes() { return this.tera ? [this.tera] : this.types; }
   stat(k, crit, attacking) {
     let s = this.stats[k], b = this.boosts[k];
@@ -282,6 +282,7 @@ class Battle {
       m.zNext = true; this.say(LANG === 'ko' ? 'Z파워 충전!' : 'Z-Power charged!');
       this.addFx({kind: 'burst', x: m.x, y: m.y, t: 0, life: 0.6, color: '#ffe066', r: 90});
     } else if (g === 'dmax') {
+      if (m.sp.fm === 'Eternamax') return false;
       m.dmaxT = 15; m.maxhp *= 2; m.hp *= 2;
       if (m.set.gmax && m.sp.gmaxs && SP[m.sp.gmaxs[0]]) { m.preG = m.sp; const g2 = SP[m.sp.gmaxs[0]]; m.sp = g2; m.sprite = getSprite(g2.id, m.set.shiny); }
       m.flashT = 1; this.shake = 0.5; this.addFx({kind: 'burst', x: m.x, y: m.y, t: 0, life: 0.9, color: '#ff3355', r: 180});
@@ -835,7 +836,7 @@ class Battle {
     // gimmicks
     if (!s.used.mega && (m.set.mega || m.sp.megas) && !m.sp.mega && m.enterT > 1) this.useGimmick(1, 'mega');
     if (!s.used.tera && m.set.tera && m.hp < m.maxhp * 0.7) this.useGimmick(1, 'tera');
-    if (!s.used.dmax && s.mons.filter(x => !x.fainted).length === 1 && m.enterT > 1.5) this.useGimmick(1, 'dmax');
+    if (!s.used.dmax && m.sp.fm !== 'Eternamax' && s.mons.filter(x => !x.fainted).length === 1 && m.enterT > 1.5) this.useGimmick(1, 'dmax');
     if (!s.used.z && m.hp < m.maxhp * 0.5 && Math.random() < dt) this.useGimmick(1, 'z');
     // voluntary swap
     if (s.swapCD <= 0 && m.state !== 'windup' && Math.random() < dt * 0.25) {
@@ -1107,8 +1108,8 @@ function updateCam(b, dt) {
   const ms = [b.act(0), b.act(1)].filter(m => !m.fainted && !m.leaving).concat(b.fainting);
   if (!ms.length) return;
   let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
-  for (const m of ms) { const s = m.renderSize; x0 = Math.min(x0, m.x - s * 0.6); x1 = Math.max(x1, m.x + s * 0.6); y0 = Math.min(y0, m.y - s * 0.8); y1 = Math.max(y1, m.y + s * 0.5); }
-  const z = clamp(Math.min(VIEW.w / (x1 - x0 + 360), VIEW.h / (y1 - y0 + 200)), 0.4, 1.1);
+  for (const m of ms) { const s = Math.min(m.renderSize, 500); x0 = Math.min(x0, m.x - s * 0.6); x1 = Math.max(x1, m.x + s * 0.6); y0 = Math.min(y0, m.y - s * 0.8); y1 = Math.max(y1, m.y + s * 0.5); }
+  const z = clamp(Math.min(VIEW.w / (x1 - x0 + 360), VIEW.h / (y1 - y0 + 200)), 0.42, 1.1);
   let cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
   const hw = VIEW.w / 2 / z, hh = VIEW.h / 2 / z, m = 40;
   cx = hw * 2 >= ARENA.w + 2 * m ? ARENA.w / 2 : clamp(cx, hw - m, ARENA.w - hw + m);
@@ -1434,7 +1435,7 @@ function drawMonGhost(b, m, x, y, h) {
 </script>
 <script>// ===== Team setup, saving =====
 const SAVE_KEY = 'pkrt_save_v1';
-const PICKABLE = D.species.filter(s => !s.bo && !/Totem|Gmax|Mega|Primal|Eternamax/.test(s.fm || ''));  // Eternamax is saved for a story boss
+const PICKABLE = D.species.filter(s => !s.bo && !/Totem|Gmax|Mega|Primal/.test(s.fm || ''));
 let SAVE = null;
 function defaultMoves(sp) {
   const ls = (sp.ls || []).map(i => MV[i]).filter(m => m && !m.ns);
