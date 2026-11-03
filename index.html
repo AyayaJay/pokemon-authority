@@ -199,8 +199,9 @@ class Mon {
     const iv = this.set.ivs || [31, 31, 31, 31, 31, 31], ev = this.set.evs || [0, 0, 0, 0, 0, 0];
     const st = (B, i) => Math.floor((2 * B + iv[i] + ev[i] / 4) * L / 100) + 5;
     const newMax = Math.floor((2 * b[0] + iv[0] + ev[0] / 4) * L / 100) + L + 10;
-    if (init) this.maxhp = Math.floor(newMax * 1.5 * (sp.fm === 'Eternamax' ? 3 : 1) * (godKind(sp) ? 3 : 1));   // gods x3 HP so they can't one-shot each other   // everyone x1.5 HP for longer fights; Eternamax boss x3 on top
+    if (init) this.maxhp = Math.floor(newMax * STAT_MUL.hp * (sp.fm === 'Eternamax' ? 3 : 1) * (godKind(sp) ? 3 : 1));   // global HP x3; Eternamax boss x3; gods x3   // everyone x1.5 HP for longer fights; Eternamax boss x3 on top
     this.stats = {atk: st(b[1], 1), def: st(b[2], 2), spa: st(b[3], 3), spd: st(b[4], 4), spe: st(b[5], 5)};
+    for (const k in this.stats) this.stats[k] *= STAT_MUL.other;   // global x2 (Speed too, but movement uses the original value)
     const nat = NATURES[this.set.nature]; if (nat && nat[0]) { this.stats[nat[0]] = Math.floor(this.stats[nat[0]] * 1.1); this.stats[nat[1]] = Math.floor(this.stats[nat[1]] * 0.9); }
     this.size = sp.fm === 'Eternamax' ? ARENA.w / 2 : sizeFor(sp.h); this.god = godKind(sp);   // Eternamax: about half the field
     if (!init) this.ability = toID(sp.ab[0]);
@@ -227,10 +228,11 @@ class Mon {
     return s;
   }
   hasAbility(a) { return this.ability === a; }
-  spdN() { return this.stat('spe') * 50 / this.level; }   // Speed judged as if Lv 50, so level doesn't flatten speed differences
+  spdN() { return this.stat('spe') / STAT_MUL.other * 50 / this.level; }   // Speed judged as if Lv 50, so level doesn't flatten speed differences
 }
 
 // ===== Battle =====
+const STAT_MUL = {hp: 3, other: 2};
 const ARENA = {x: 0, y: 0, w: 2200, h: 1100};
 class Battle {
   constructor(teams, opts) {
