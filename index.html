@@ -55,7 +55,7 @@ const D = window.PKDATA;
 const SP = {}; D.species.forEach(s => SP[s.id] = s);
 const MV = D.moves; const MVI = {}; MV.forEach((m, i) => MVI[m.id] = i);
 const TYPES = Object.keys(D.types);
-const TYPE_COLOR = {Normal:'#A8A77A',Fire:'#EE8130',Water:'#6390F0',Electric:'#F7D02C',Grass:'#7AC74C',Ice:'#96D9D6',Fighting:'#C22E28',Poison:'#A33EA1',Ground:'#E2BF65',Flying:'#A98FF3',Psychic:'#F95587',Bug:'#A6B91A',Rock:'#B6A136',Ghost:'#735797',Dragon:'#6F35FC',Dark:'#705746',Steel:'#B7B7CE',Fairy:'#D685AD'};
+const TYPE_COLOR = {'???':'#68A090',Normal:'#A8A77A',Fire:'#EE8130',Water:'#6390F0',Electric:'#F7D02C',Grass:'#7AC74C',Ice:'#96D9D6',Fighting:'#C22E28',Poison:'#A33EA1',Ground:'#E2BF65',Flying:'#A98FF3',Psychic:'#F95587',Bug:'#A6B91A',Rock:'#B6A136',Ghost:'#735797',Dragon:'#6F35FC',Dark:'#705746',Steel:'#B7B7CE',Fairy:'#D685AD'};
 let LANG = 'en';
 const L10N = {
   en:{se:"Super effective!",nve:"Not very effective",immune:"No effect",crit:"Critical hit!",miss:"Missed!",protect:"Protected!",interrupt:"Interrupted!",recharge:"Must recharge",immuneGod:"Unaffected!",win:"You win!",lose:"You lose...",draw:"Draw",timeup:"Time up!",choose:"Choose next Pokémon",time:"TIME",space:"SPACE",anti:"ANTIMATTER",mega:"MEGA",z:"Z",tera:"TERA",dmax:"DMAX",speed:"Speed",forfeit:"Forfeit",tapSpot:"Tap a spot to teleport",timeStop:"Time stopped!",reversal:"Reversal!",erase:"Erased!",fainted:"fainted!",brn:"Burned",par:"Paralyzed",psn:"Poisoned",tox:"Badly poisoned",slp:"Asleep",frz:"Frozen",confusion:"Confused",flinch:"Flinched",atk:"Atk",def:"Def",spa:"SpA",spd:"SpD",spe:"Spe",accuracy:"Acc",evasion:"Eva"},
@@ -68,7 +68,7 @@ const abName = id => { const a = D.abil[toID(id)]; return a ? (LANG === 'ko' ? a
 const tyName = t => LANG === 'ko' ? (D.types[t] ? D.types[t].ko : t) : t;
 function toID(s) { return ('' + s).toLowerCase().replace(/[^a-z0-9]/g, ''); }
 function eff(atkType, defTypes) {
-  let m = 1;
+  let m = 1; if (atkType === '???') return 1;
   for (const t of defTypes) { const d = D.types[t] && D.types[t].dmg[atkType]; if (d === 1) m *= 2; else if (d === 2) m *= 0.5; else if (d === 3) m *= 0; }
   return m;
 }
@@ -81,6 +81,7 @@ function sizeFor(h) { return clamp(50 * Math.pow(Math.max(h, 0.05) / 0.4, 0.7), 
 // Z / Max move names by type
 const ZNAME = {Normal:'Breakneck Blitz',Fire:'Inferno Overdrive',Water:'Hydro Vortex',Electric:'Gigavolt Havoc',Grass:'Bloom Doom',Ice:'Subzero Slammer',Fighting:'All-Out Pummeling',Poison:'Acid Downpour',Ground:'Tectonic Rage',Flying:'Supersonic Skystrike',Psychic:'Shattered Psyche',Bug:'Savage Spin-Out',Rock:'Continental Crush',Ghost:'Never-Ending Nightmare',Dragon:'Devastating Drake',Dark:'Black Hole Eclipse',Steel:'Corkscrew Crash',Fairy:'Twinkle Tackle'};
 const MAXNAME = {Normal:'Max Strike',Fire:'Max Flare',Water:'Max Geyser',Electric:'Max Lightning',Grass:'Max Overgrowth',Ice:'Max Hailstorm',Fighting:'Max Knuckle',Poison:'Max Ooze',Ground:'Max Quake',Flying:'Max Airstream',Psychic:'Max Mindstorm',Bug:'Max Flutterby',Rock:'Max Rockfall',Ghost:'Max Phantasm',Dragon:'Max Wyrmwind',Dark:'Max Darkness',Steel:'Max Steelspike',Fairy:'Max Starfall'};
+const STRUGGLE = {id: 'struggle', n: 'Struggle', ko: '발버둥', t: '???', c: 'P', bp: 50, a: 0, pp: 1, pr: 0, tg: 'normal', f: ['ct'], rcl: 0.25, z: 0, mx: 0};
 const ZID = {Normal:'breakneckblitz',Fire:'infernooverdrive',Water:'hydrovortex',Electric:'gigavolthavoc',Grass:'bloomdoom',Ice:'subzeroslammer',Fighting:'alloutpummeling',Poison:'aciddownpour',Ground:'tectonicrage',Flying:'supersonicskystrike',Psychic:'shatteredpsyche',Bug:'savagespinout',Rock:'continentalcrush',Ghost:'neverendingnightmare',Dragon:'devastatingdrake',Dark:'blackholeeclipse',Steel:'corkscrewcrash',Fairy:'twinkletackle'};
 const MAXID = {}; for (const t in MAXNAME) MAXID[t] = toID(MAXNAME[t]);
 const MAXFX = {Fire:{w:'sunnyday'},Water:{w:'raindance'},Rock:{w:'sandstorm'},Ice:{w:'snow'},Normal:{foe:{spe:-1}},Fighting:{self:{atk:1}},Flying:{self:{spe:1}},Poison:{self:{spa:1}},Ground:{self:{spd:1}},Steel:{self:{def:1}},Dragon:{foe:{atk:-1}},Ghost:{foe:{def:-1}},Dark:{foe:{spd:-1}},Bug:{foe:{spa:-1}}};
@@ -442,6 +443,7 @@ class Battle {
     return best;
   }
   moveType(m, mv) {
+    if (mv.id === 'struggle') return '???';
     if (mv.id === 'judgment' && m.sp.base === 'arceus') return this.legendType(m);
     if (mv.id === 'judgment' || mv.id === 'multiattack') return m.sp.t[0];
     if (mv.id === 'terablast' && m.tera) return m.tera;
@@ -519,7 +521,11 @@ class Battle {
     if (m.cd > 0) m.cd -= dt;
     // choose next
     if (!m.cur && m.cd <= 0) {
-      const i = this.chooseMove(m);
+      let i = this.chooseMove(m);
+      if ((i === null || i === undefined) && !m.moves.some(s => s.pp > 0 && s.m.c !== 'X' && s !== m.struggleSlot)) {
+        if (!m.struggleSlot) { m.struggleSlot = {m: STRUGGLE, pp: 1e9}; m.moves.push(m.struggleSlot); }
+        i = m.moves.indexOf(m.struggleSlot);
+      }
       if (i !== null && i !== undefined) {
         const mv = m.moves[i].m;
         m.cur = {i, mv, info: this.moveInfo(m, mv)};
@@ -1422,6 +1428,7 @@ function drawHUD(b) {
     const py = 590; const px = left ? 110 : 690;
     ctx.fillStyle = '#fff'; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(spName(m.sp) + ' · ' + abName(m.ability), px, py - 8);
     m.moves.forEach((sl, i) => {
+      if (i > 3) return;
       const x = px + (i % 2) * 238, y = py + Math.floor(i / 2) * 50; const mv = sl.m;
       const t = (m.dmaxT > 0 && mv.c !== 'X') ? mv.t : mv.t;
       ctx.globalAlpha = sl.pp > 0 ? 1 : 0.4;
