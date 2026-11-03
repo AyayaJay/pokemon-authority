@@ -199,7 +199,7 @@ class Mon {
     const iv = this.set.ivs || [31, 31, 31, 31, 31, 31], ev = this.set.evs || [0, 0, 0, 0, 0, 0];
     const st = (B, i) => Math.floor((2 * B + iv[i] + ev[i] / 4) * L / 100) + 5;
     const newMax = Math.floor((2 * b[0] + iv[0] + ev[0] / 4) * L / 100) + L + 10;
-    if (init) this.maxhp = Math.floor(newMax * 1.5 * (sp.fm === 'Eternamax' ? 3 : 1));   // everyone x1.5 HP for longer fights; Eternamax boss x3 on top
+    if (init) this.maxhp = Math.floor(newMax * 1.5 * (sp.fm === 'Eternamax' ? 3 : 1) * (godKind(sp) ? 3 : 1));   // gods x3 HP so they can't one-shot each other   // everyone x1.5 HP for longer fights; Eternamax boss x3 on top
     this.stats = {atk: st(b[1], 1), def: st(b[2], 2), spa: st(b[3], 3), spd: st(b[4], 4), spe: st(b[5], 5)};
     const nat = NATURES[this.set.nature]; if (nat && nat[0]) { this.stats[nat[0]] = Math.floor(this.stats[nat[0]] * 1.1); this.stats[nat[1]] = Math.floor(this.stats[nat[1]] * 0.9); }
     this.size = sp.fm === 'Eternamax' ? ARENA.w / 2 : sizeFor(sp.h); this.god = godKind(sp);   // Eternamax: about half the field
@@ -385,7 +385,7 @@ class Battle {
         if (m.dmaxT > 0) bp = mv.mx || 100;
         if (mv.mh) bp *= Array.isArray(mv.mh) ? 3 : mv.mh;
         const type = this.moveType(m, mv);
-        let e = eff(type, f.teraTypes); if (this.immuneByAbility(f, type)) e = 0;
+        let e = eff(type, f.teraTypes); if (this.immuneByAbility(f, type)) e = 0; if (mv.god && e === 0) e = 1;
         const stab = m.teraTypes.includes(type) || m.types.includes(type) ? 1.5 : 1;
         const A = mv.c === 'P' ? m.stat('atk') : m.stat('spa'); const Dd = mv.c === 'P' ? f.stat('def') : f.stat('spd');
         sc += bp * e * stab * (mv.a ? mv.a / 100 : 1) * (A / Dd);
@@ -712,7 +712,7 @@ class Battle {
       return;
     }
     const type = p.type;
-    const ab = this.immuneByAbility(f, type);
+    const ab = mv.god ? null : this.immuneByAbility(f, type);
     if (ab && !m.hasAbility('moldbreaker')) {
       this.float(f, abName(ab), '#9cf');
       if (ab === 'waterabsorb' || ab === 'voltabsorb' || ab === 'dryskin') this.heal(f, f.maxhp / 4);
@@ -796,6 +796,7 @@ class Battle {
     }
     let e = mv.dmg ? (eff(type, f.teraTypes) === 0 ? 0 : 1) : eff(type, f.teraTypes);
     if (type === 'Ground' && f.hasAbility('levitate')) e = 0;
+    if (mv.god && e === 0) { let v = 1; for (const t of f.teraTypes) { const d = D.types[t] && D.types[t].dmg[type]; if (d === 1) v *= 2; else if (d === 2) v *= 0.5; } e = v; }   // god moves ignore immunities (Another Red rule)
     if (!mv.dmg && !mv.ohko) {
       dmg *= e;
       if (e > 1 && (f.hasAbility('filter') || f.hasAbility('solidrock') || f.hasAbility('prismarmor'))) dmg *= 0.75;
