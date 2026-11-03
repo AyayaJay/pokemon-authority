@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<html lang="ko"><head><meta charset="utf-8"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Pokémon Authority — Battle Prototype</title>
 <style>
 html,body{margin:0;background:#081a45;color:#eaf1ff;font-family:system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;overscroll-behavior:none}
-#cv{display:none;margin:0 auto;touch-action:none;position:absolute;inset:0;margin:auto}
+#cv{display:none;touch-action:none}
+body.inbattle{overflow:hidden}
 #setup{padding:12px;max-width:1200px;margin:0 auto}
 h1{font-size:20px;margin:4px 0} h2{font-size:17px;margin:4px 0 8px}
 .top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
@@ -26,7 +27,7 @@ select,input{font-size:14px;border-radius:6px;border:1px solid #567;padding:4px;
 .opts select{max-width:46vw}.settings select{max-width:100%;width:100%}
 .cols>*{min-width:0}.panel{min-width:0;overflow:hidden}
 #rot{display:none;position:fixed;inset:0;background:#081a45;color:#fff;z-index:20;align-items:center;justify-content:center;flex-direction:column;font-size:22px;text-align:center;gap:16px}
-@media (orientation:portrait){body.inbattle #rot{display:flex}}
+
 .statbox{font-size:13px;margin:4px 0 6px;opacity:.95}.statbox summary{cursor:pointer}.statgrid{display:grid;grid-template-columns:auto repeat(6,minmax(0,1fr));gap:3px;align-items:center;margin:6px 0}.statgrid input{width:100%;padding:3px;font-size:13px}.statgrid b{text-align:center;font-size:12px}
 .startrow{text-align:center;margin:16px 0}.hint{opacity:.7;font-size:12px;margin-top:6px}
 .rec{opacity:.8;font-weight:700}
@@ -1150,21 +1151,33 @@ const _ell = CanvasRenderingContext2D.prototype.ellipse;
 CanvasRenderingContext2D.prototype.ellipse = function (x, y, rx, ry, ro, a, b, c) { return _ell.call(this, x, y, Math.max(0, rx), Math.max(0, ry), ro, a, b, c); };
 function initCanvas() {
   cv = document.getElementById('cv'); ctx = cv.getContext('2d');
+  // In portrait (e.g. iPhone, where websites can't rotate the screen) the battle is drawn sideways so turning the phone works
   const fit = () => {
-    const sw = window.innerWidth, sh = window.innerHeight; const s = Math.min(sw / W, sh / H);
+    const sw = window.innerWidth, sh = window.innerHeight;
+    const rot = sh > sw && document.body.classList.contains('inbattle');
+    cv._rot = rot;
+    const s = rot ? Math.min(sh / W, sw / H) : Math.min(sw / W, sh / H);
     cv.style.width = W * s + 'px'; cv.style.height = H * s + 'px';
+    cv.style.position = 'fixed'; cv.style.left = '50%'; cv.style.top = '50%'; cv.style.margin = '0';
+    cv.style.transform = 'translate(-50%, -50%)' + (rot ? ' rotate(90deg)' : '');
     const dpr = Math.min(window.devicePixelRatio || 1, 2); cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   };
-  window.addEventListener('resize', fit); fit();
+  window.addEventListener('orientationchange', () => setTimeout(fit, 200));
+  window._fitCanvas = fit;
   cv.addEventListener('pointerdown', e => {
-    const r = cv.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width * W, y = (e.clientY - r.top) / r.height * H;
+    const r = cv.getBoundingClientRect(); let x, y;
+    if (cv._rot) {   // undo the 90° rotation: screen offset from centre -> canvas coordinates
+      const cw = parseFloat(cv.style.width), ch = parseFloat(cv.style.height);
+      const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+      x = (dy + cw / 2) / cw * W; y = (-dx + ch / 2) / ch * H;
+    } else { x = (e.clientX - r.left) / r.width * W; y = (e.clientY - r.top) / r.height * H; }
     for (let i = hits.length - 1; i >= 0; i--) { const h = hits[i]; if (x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) { h.fn(); return; } }
     if (battle && battle.aiming > 0 && x > VIEW.x && x < VIEW.x + VIEW.w && y > VIEW.y && y < VIEW.y + VIEW.h) { const w = screenToWorld(x, y); battle.teleport(w.x, w.y); }
   });
 }
 function startBattle(teams, opts, endCb) {
   battle = new Battle(teams, opts); onBattleEnd = endCb; speedMul = 1;
-  document.getElementById('setup').style.display = 'none'; cv.style.display = 'block'; document.body.classList.add('inbattle');
+  document.getElementById('setup').style.display = 'none'; cv.style.display = 'block'; document.body.classList.add('inbattle'); if (window._fitCanvas) window._fitCanvas();
   try { const de = document.documentElement; if (de.requestFullscreen && window.matchMedia('(pointer:coarse)').matches) de.requestFullscreen().then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {})).catch(() => {}); } catch (e) {}
   lastT = performance.now(); requestAnimationFrame(loop);
 }
