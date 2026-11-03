@@ -112,9 +112,13 @@ function getSprite(spId, shiny) {
   spriteCache[key] = entry;
   (async () => {
     let d = null;
-    const pm = s.pmd;
-    if (pm) { try { d = await loadPMD(shiny && pm.s ? pm.s : pm.p); } catch (e) { d = null; } }
-    if (!d) { try { d = await loadSD(s, shiny); } catch (e) { d = null; } }
+    // chain: this form (PMD, Showdown) -> base species (PMD, Showdown)
+    const chain = [s]; const b = SP[s.base]; if (b && b !== s) chain.push(b);
+    for (const c of chain) {
+      if (!d && c.pmd) { try { d = await loadPMD(shiny && c.pmd.s ? c.pmd.s : c.pmd.p); } catch (e) { d = null; } }
+      if (!d) { try { const sd = await loadSD(c, shiny); if (sd && sd.front) d = sd; } catch (e) { d = null; } }
+      if (d) break;
+    }
     entry.data = d; entry.ready = true;
   })();
   return entry;
@@ -128,8 +132,12 @@ function getPortrait(spId, shiny) {
   (async () => {
     let img = null;
     if (s.pmd && s.pmd.pt) img = await loadImg(PMD_URL + 'portrait/' + s.pmd.pt + '/Normal.png');
+    let crop = !img;
     if (!img) img = await loadImg(SD_URL + (shiny ? 'gen5-shiny/' : 'gen5/') + (s.sd || s.id) + '.png');
-    e.img = img; e.crop = !(s.pmd && s.pmd.pt);
+    const b = SP[s.base];
+    if (!img && b && b.pmd && b.pmd.pt) { img = await loadImg(PMD_URL + 'portrait/' + b.pmd.pt + '/Normal.png'); crop = false; }
+    if (!img && b) img = await loadImg(SD_URL + 'gen5/' + (b.sd || b.id) + '.png');
+    e.img = img; e.crop = crop;
   })();
   return e;
 }
@@ -896,8 +904,9 @@ function drawMon(b, m) {
     ctx.translate(x, y - bob); if (flip) ctx.scale(-1, 1);
     ctx.drawImage(img, -img.width * sc / 2, -img.height * sc / 2 - sz * 0.05, img.width * sc, img.height * sc);
   } else {
-    ctx.fillStyle = TYPE_COLOR[m.types[0]]; ctx.beginPath(); ctx.arc(x, y, sz * 0.35, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(spName(m.sp).slice(0, 6), x, y + 5);
+    // still loading (or no sprite anywhere): soft shimmer, no name bubble
+    ctx.globalAlpha = 0.35 + 0.15 * Math.sin(performance.now() / 150); ctx.fillStyle = TYPE_COLOR[m.types[0]];
+    ctx.beginPath(); ctx.ellipse(x, y, sz * 0.3, sz * 0.38, 0, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
   }
   ctx.restore();
   if (!frozen) { if (m.moving > 0) m.moving -= 1 / 60; if (m.atkAnimT > 0) m.atkAnimT -= 1 / 60; }
@@ -1135,7 +1144,7 @@ function slotCard(side, i, set) {
   const sp = SP[set.id]; const team = SAVE.teams[side];
   const save = () => persist();
   const c = el('div', {className: 'slot'});
-  const img = el('img', {src: portraitURL(sp, set.shiny), className: 'pt', on: {error: e => { if (!e.target.dataset.f) { e.target.dataset.f = 1; e.target.src = SD_URL + 'gen5/' + (sp.sd || sp.id) + '.png'; } else e.target.style.visibility = 'hidden'; }}});
+  const img = el('img', {src: portraitURL(sp, set.shiny), className: 'pt', on: {error: e => { if (!e.target.dataset.f) { e.target.dataset.f = 1; e.target.src = SD_URL + 'gen5/' + (sp.sd || sp.id) + '.png'; } else if (e.target.dataset.f == 1 && SP[sp.base] && SP[sp.base] !== sp) { e.target.dataset.f = 2; e.target.src = portraitURL(SP[sp.base], false); } else e.target.style.visibility = 'hidden'; }}});
   const head = el('div', {className: 'shead'}, img,
     el('div', {}, el('div', {className: 'nm', on: {click: () => openPicker(id => { team[i] = newSet(id); save(); renderSetup(); })}}, spName(sp) + ' ✎'),
       el('div', {className: 'types'}, ...sp.t.map(t => el('span', {className: 'ty', style: 'background:' + TYPE_COLOR[t]}, tyName(t)))),
@@ -1196,6 +1205,7 @@ function importSave() {
 function begin() {
   const st = SAVE.settings;
   const teams = SAVE.teams.map(t => t.map(s => JSON.parse(JSON.stringify(s))));
+  for (const t of teams) for (const s of t) getSprite(s.id, s.shiny);
   startBattle(teams, {swapCD: st.swapCD, level: st.level, auth: st.auth, antiMode: st.antiMode}, (result, rematch) => {
     SAVE.record[result] = (SAVE.record[result] || 0) + 1; persist();
     if (rematch) begin(); else { document.body.classList.remove('inbattle'); try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {} cv.style.display = 'none'; $('#setup').style.display = 'block'; renderSetup(); }
