@@ -74,7 +74,7 @@ function eff(atkType, defTypes) {
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const rnd = (a, b) => a + Math.random() * (b - a);
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-function sizeFor(h) { return clamp(44 * Math.sqrt(Math.max(h, 0.05) / 0.4), 30, 250); }
+function sizeFor(h) { return clamp(50 * Math.pow(Math.max(h, 0.05) / 0.4, 0.7), 32, 520); }
 
 // Z / Max move names by type
 const ZNAME = {Normal:'Breakneck Blitz',Fire:'Inferno Overdrive',Water:'Hydro Vortex',Electric:'Gigavolt Havoc',Grass:'Bloom Doom',Ice:'Subzero Slammer',Fighting:'All-Out Pummeling',Poison:'Acid Downpour',Ground:'Tectonic Rage',Flying:'Supersonic Skystrike',Psychic:'Shattered Psyche',Bug:'Savage Spin-Out',Rock:'Continental Crush',Ghost:'Never-Ending Nightmare',Dragon:'Devastating Drake',Dark:'Black Hole Eclipse',Steel:'Corkscrew Crash',Fairy:'Twinkle Tackle'};
@@ -189,7 +189,7 @@ class Mon {
     this.statusTick = 0; this.toxN = 1; this.zNext = false; this.strafe = Math.random() < 0.5 ? 1 : -1;
   }
   get radius() { return this.renderSize * 0.32; }
-  get renderSize() { return clamp(this.size * (this.dmaxT > 0 ? 1.7 : 1), 30, 320); }
+  get renderSize() { return clamp(this.size * (this.dmaxT > 0 ? 1.7 : 1), 32, 700); }
   get teraTypes() { return this.tera ? [this.tera] : this.types; }
   stat(k, crit, attacking) {
     let s = this.stats[k], b = this.boosts[k];
@@ -205,7 +205,7 @@ class Mon {
 }
 
 // ===== Battle =====
-const ARENA = {x: 0, y: 0, w: 1900, h: 950};
+const ARENA = {x: 0, y: 0, w: 2200, h: 1100};
 class Battle {
   constructor(teams, opts) {
     this.opts = opts;
@@ -222,7 +222,7 @@ class Battle {
   enter(s, idx, first) {
     const side = this.sides.indexOf(s);
     s.active = idx; const m = s.mons[idx]; m.resetVolatile(); m.leaving = false; this.fainting = this.fainting.filter(x => x !== m);
-    m.x = side === 0 ? ARENA.x + 520 : ARENA.x + ARENA.w - 520; m.y = ARENA.y + ARENA.h / 2 + rnd(-60, 60); m.vx = m.vy = 0; m.mode = null;
+    m.x = side === 0 ? ARENA.x + 620 : ARENA.x + ARENA.w - 620; m.y = ARENA.y + ARENA.h / 2 + rnd(-60, 60); m.vx = m.vy = 0; m.mode = null;
     m.cd = 0.6; m.flashT = 0.4;
     this.addFx({kind: 'ball', x: m.x, y: m.y, t: 0, life: 0.45, color: '#fff'});
     if (!first) this.say(spName(m.sp) + '!');
@@ -1108,7 +1108,7 @@ function updateCam(b, dt) {
   if (!ms.length) return;
   let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
   for (const m of ms) { const s = m.renderSize; x0 = Math.min(x0, m.x - s * 0.6); x1 = Math.max(x1, m.x + s * 0.6); y0 = Math.min(y0, m.y - s * 0.8); y1 = Math.max(y1, m.y + s * 0.5); }
-  const z = clamp(Math.min(VIEW.w / (x1 - x0 + 360), VIEW.h / (y1 - y0 + 220)), 0.48, 1.1);
+  const z = clamp(Math.min(VIEW.w / (x1 - x0 + 360), VIEW.h / (y1 - y0 + 200)), 0.4, 1.1);
   let cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
   const hw = VIEW.w / 2 / z, hh = VIEW.h / 2 / z, m = 40;
   cx = hw * 2 >= ARENA.w + 2 * m ? ARENA.w / 2 : clamp(cx, hw - m, ARENA.w - hw + m);
