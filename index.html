@@ -228,7 +228,7 @@ class Mon {
     this.state = 'idle'; this.timer = 0; this.cd = 0.8; this.cur = null; this.vol = {};
     this.protectT = 0; this.protectChain = 0; this.stunT = 0; this.flashT = 0; this.hurtT = 0;
     this.enterT = 0; this.vx = 0; this.vy = 0; this.dir = this.side === 0 ? 2 : 6; this.animT = 0;
-    this.statusTick = 0; this.toxN = 1; this.zNext = false; this.strafe = Math.random() < 0.5 ? 1 : -1;
+    this.statusTick = 0; this.toxN = 1; this.zNext = false; this.strafe = Math.random() < 0.5 ? 1 : -1; this.opened = false; this.gapBuff = false;
   }
   get radius() { return this.renderSize * 0.32; }
   get renderSize() { return clamp(this.size * (this.dmaxT > 0 ? 1.7 : 1), 32, Math.max(950, this.size)); }
@@ -398,8 +398,25 @@ class Battle {
   meleeRange(m, f) { return m.radius + f.radius + 26; }
 
   // AI: choose a move
+  noFoe(m) { const f = this.foe(m); return !f || f.fainted || f.leaving || this.sides[f.side].choosing; }
   chooseMove(m) {
     const f = this.foe(m); let best = null, bs = 0;
+    const SELF = ['self', 'allySide', 'adjacentAllyOrSelf', 'allies'];
+    const isBuff = (sl, cap = 2) => sl.pp > 0 && sl.m.c === 'X' && sl.m.bo && SELF.includes(sl.m.tg) && Object.keys(sl.m.bo).some(k => sl.m.bo[k] > 0 && m.boosts[k] < cap);
+    const isHeal = sl => sl.pp > 0 && sl.m.c === 'X' && (sl.m.hl || (sl.m.id === 'rest' && !m.status));
+    // 1) heal on time
+    if (m.hp / m.maxhp < 0.5 && !m.dmaxT) {
+      const h = m.moves.findIndex(sl => isHeal(sl) && (sl.m.id !== 'rest' || m.hp / m.maxhp < 0.35));
+      if (h >= 0) return h;
+    }
+    // 2) no target (it just fainted / is being replaced): don't waste attacks, set up once instead
+    if (this.noFoe(m)) {
+      if (!m.gapBuff) { m.gapBuff = true; const k = m.moves.findIndex(sl => isBuff(sl, 6)); if (k >= 0) return k; }
+      return null;
+    }
+    m.gapBuff = false;
+    // 3) opening move: use a stat-boosting move once when entering, then fight
+    if (!m.opened) { m.opened = true; const k = m.moves.findIndex(isBuff); if (k >= 0 && !m.dmaxT) return k; }
     m.moves.forEach((slot, i) => {
       const mv = slot.m; if (slot.pp <= 0) return;
       let sc = 0;
@@ -502,6 +519,7 @@ class Battle {
   }
   updateMon(m, dt) {
     const f = this.foe(m);
+    if (m.cur && m.cur.mv.c !== 'X' && this.noFoe(m)) { m.cur = null; if (m.state === 'windup') m.state = 'idle'; m.cd = Math.max(m.cd, 0.3); }
     m.enterT += dt; m.animT += dt;
     if (m.flashT > 0) m.flashT -= dt; if (m.hurtT > 0) m.hurtT -= dt; if (m.protectT > 0) m.protectT -= dt;
     if (m.dmaxT > 0) { m.dmaxT -= dt; if (m.dmaxT <= 0) this.endDmax(m); }
@@ -670,6 +688,7 @@ class Battle {
   }
   release(m) {
     const f = this.foe(m); const c = m.cur; m.state = 'idle'; m.cur = null;
+    if (c.mv.c !== 'X' && this.noFoe(m)) return;   // target gone: no PP spent
     const slot = m.moves[c.i]; slot.pp--;
     let mv = c.mv; const info = c.info;
     // Z / Max conversions
@@ -725,7 +744,7 @@ class Battle {
     }
     if (mv.rc && !mv.god) { m.stunT = 1.6; this.float(m, T('recharge'), '#ccc'); }
   }
-  actionDelay(m) { return 1.1; }   // same attack rate for everyone; Speed affects movement instead
+  actionDelay(m) { return 1.4; }   // same attack rate for everyone; Speed affects movement instead
   speedFactor(m) { return clamp(Math.pow(120 / Math.max(1, m.stat('spe')), 0.5), 0.55, 1.6); }
   updateProjs(dt) {
     for (const p of this.projs) {
