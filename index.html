@@ -221,7 +221,7 @@ class Battle {
   foe(m) { return this.act(1 - m.side); }
   enter(s, idx, first) {
     const side = this.sides.indexOf(s);
-    s.active = idx; const m = s.mons[idx]; m.resetVolatile();
+    s.active = idx; const m = s.mons[idx]; m.resetVolatile(); m.leaving = false; this.fainting = this.fainting.filter(x => x !== m);
     m.x = side === 0 ? ARENA.x + 140 : ARENA.x + ARENA.w - 140; m.y = ARENA.y + ARENA.h / 2 + rnd(-40, 40);
     m.cd = 0.6; m.flashT = 0.4;
     this.addFx({kind: 'ball', x: m.x, y: m.y, t: 0, life: 0.45, color: '#fff'});
@@ -260,6 +260,7 @@ class Battle {
     if (!forced && cur.hasAbility('naturalcure')) cur.status = null;
     if (cur.dmaxT > 0) this.endDmax(cur);
     if (!forced) s.swapCD = this.opts.swapCD;
+    if (!cur.fainted) { cur.leaving = true; cur.faintT = 1.4; cur.state = 'idle'; cur.cur = null; cur.sdA = null; this.fainting.push(cur); }
     s.choosing = false;
     this.enter(s, idx);
     return true;
@@ -419,7 +420,7 @@ class Battle {
   }
 
   update(dt) {
-    for (const f of this.fainting) f.faintT += dt; this.fainting = this.fainting.filter(f => f.faintT < 2.4);
+    for (const f of this.fainting) f.faintT += dt; this.fainting = this.fainting.filter(f => f.faintT < 1.95);
     if (this.over) { this.updateFx(dt); return; }
     this.time += dt;
     if (this.overPending) { this.overPending.t -= dt; if (this.overPending.t <= 0) { this.over = this.overPending.r; this.overT = 0; this.overPending = null; } this.updateFx(dt); return; }
@@ -753,9 +754,9 @@ class Battle {
     this.float(m, spName(m.sp) + ' ' + T('fainted'), '#fff', true);
     const s = this.sides[m.side];
     const left = s.mons.filter(x => !x.fainted);
-    if (!left.length) { if (!this.overPending && !this.over) this.overPending = {r: m.side === 0 ? 'lose' : 'win', t: 2.5}; return; }
-    if (m.side === 0) s.choosePending = 2.1;
-    else this.pendingSwapT = 2.3;
+    if (!left.length) { if (!this.overPending && !this.over) this.overPending = {r: m.side === 0 ? 'lose' : 'win', t: 2.3}; return; }
+    if (m.side === 0) s.choosePending = 1.95;
+    else this.pendingSwapT = 2.0;
   }
   pickEnemy() {
     const s = this.sides[1], me = this.act(0); let best = -1, bs = -1e9;
@@ -1104,9 +1105,9 @@ function animFrame(a, t, loop) {
 }
 function drawMon(b, m) {
   const sv = sdMonVisual(b, m);
-  const sz = m.renderSize * (sv ? clamp(sv.scale, 0.2, 3) : 1); const frozen = b.timeStopT > 0 && m.side === 1;
+  let sz = m.renderSize * (sv ? clamp(sv.scale, 0.2, 3) : 1); const frozen = b.timeStopT > 0 && m.side === 1;
   // shadow
-  ctx.fillStyle = m.fainted ? 'rgba(0,0,0,' + (0.28 * (1 - clamp((m.faintT - 1.8) / 0.5, 0, 1))) + ')' : 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(m.x, m.y + sz * 0.22, sz * 0.32, sz * 0.11, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = (m.fainted || m.leaving) ? 'rgba(0,0,0,' + (0.28 * (1 - clamp((m.faintT - 1.4) / 0.3, 0, 1))) + ')' : 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(m.x, m.y + sz * 0.22, sz * 0.32, sz * 0.11, 0, 0, Math.PI * 2); ctx.fill();
   if (m.god) { ctx.fillStyle = 'rgba(255,215,0,0.18)'; ctx.beginPath(); ctx.arc(m.x, m.y, sz * 0.6 + Math.sin(performance.now() / 200) * 4, 0, Math.PI * 2); ctx.fill(); }
   let filt = [];
   if (frozen) filt.push('grayscale(1)');
@@ -1119,18 +1120,38 @@ function drawMon(b, m) {
   const sp = m.sprite;
   let lungeX = 0, lungeY = 0;
   for (const f of b.fx) if (f.kind === 'lunge' && f.m === m) { const k = Math.sin(f.t / f.life * Math.PI) * 26; const a = Math.atan2(f.ty - m.y, f.tx - m.x); lungeX = Math.cos(a) * k; lungeY = Math.sin(a) * k; }
-  let fy = 0, fall = 0;
-  if (m.fainted) {
+  let fy = 0, fall = 0, rk = 0, rx = 0, ry = 0;
+  if (m.fainted || m.leaving) {
     const ft = m.faintT;
-    if (ft > 0.3 && ft < 0.55) fy = -Math.sin((ft - 0.3) / 0.25 * Math.PI) * sz * 0.06;   // little bounce as it hits the ground
-    fall = clamp((ft - 0.3) / 0.3, 0, 1);
-    ctx.globalAlpha = 1 - clamp((ft - 1.8) / 0.5, 0, 1);
+    if (m.fainted) {
+      if (ft > 0.3 && ft < 0.55) fy = -Math.sin((ft - 0.3) / 0.25 * Math.PI) * sz * 0.06;   // little bounce as it hits the ground
+      fall = clamp((ft - 0.3) / 0.3, 0, 1);
+    }
+    // recall: red beam from the trainer's Poké Ball, Pokémon turns red, shrinks and gets pulled in
+    rk = clamp((ft - 1.4) / 0.5, 0, 1);
+    if (rk > 0) {
+      const bx = m.side === 0 ? ARENA.x - 34 : ARENA.x + ARENA.w + 34, by = clamp(m.y, ARENA.y + 30, ARENA.y + ARENA.h - 30);
+      const pull = rk * rk; rx = (bx - m.x) * pull; ry = (by - m.y) * pull;
+      ctx.save(); ctx.globalAlpha = Math.min(1, (1 - rk) * 2.5); ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(255,40,40,0.55)'; ctx.lineWidth = 14; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(m.x + rx, m.y + ry); ctx.stroke();
+      ctx.strokeStyle = '#ffd0d0'; ctx.lineWidth = 4; ctx.stroke();
+      // Poké Ball
+      ctx.globalAlpha = 1; ctx.fillStyle = '#e8262c'; ctx.beginPath(); ctx.arc(bx, by, 13, Math.PI, 0); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(bx, by, 13, 0, Math.PI); ctx.fill();
+      ctx.strokeStyle = '#222'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(bx, by, 13, 0, Math.PI * 2); ctx.moveTo(bx - 13, by); ctx.lineTo(bx + 13, by); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(bx, by, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.restore();
+      filt.push('brightness(0.55) sepia(1) saturate(12) hue-rotate(-40deg)');
+      if (filt.length) ctx.filter = filt.join(' ');
+      ctx.globalAlpha = 1 - clamp((rk - 0.75) / 0.25, 0, 1);
+      sz *= 1 - rk * 0.85;
+    }
   }
-  const x = m.x + lungeX + (sv ? sv.dx : 0), y = m.y + lungeY + (sv ? sv.dy : 0) + fy;
+  const x = m.x + lungeX + (sv ? sv.dx : 0) + rx, y = m.y + lungeY + (sv ? sv.dy : 0) + fy + ry;
   if (sv) ctx.globalAlpha = clamp(sv.op, 0, 1);
   if (sp.ready && sp.data && sp.data.type === 'pmd') {
     const A = sp.data.anims; let a, loop = true, t = m.animT;
-    if (m.fainted) {
+    if (m.leaving && !m.fainted) { a = A.Idle || A.Walk; t = 0; }
+    else if (m.fainted) {
       const ft = m.faintT;
       if (ft < 0.3 || !A.Faint) { a = A.Hurt || A.Idle || A.Walk; loop = false; t = Math.min(ft, 0.3); }
       else { a = A.Faint; loop = false; t = ft - 0.3; }   // real collapse animation, holds the last (lying) frame
@@ -1161,7 +1182,7 @@ function drawMon(b, m) {
   if (!frozen) { if (m.moving > 0) m.moving -= 1 / 60; if (m.atkAnimT > 0) m.atkAnimT -= 1 / 60; }
   if (m.protectT > 0) { ctx.strokeStyle = 'rgba(150,220,255,0.9)'; ctx.fillStyle = 'rgba(150,220,255,0.18)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(m.x, m.y, sz * 0.55, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
   if (m.state === 'windup' && m.cur.info.wind > 0.15) { const p = 1 - m.timer / Math.max(0.01, m.cur.info.wind); ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(m.x - 30, m.y + m.renderSize * 0.3 + 8, 60, 5); ctx.fillStyle = TYPE_COLOR[m.cur.mv.t]; ctx.fillRect(m.x - 30, m.y + m.renderSize * 0.3 + 8, 60 * p, 5); }
-  if (m.fainted) return;
+  if (m.fainted || m.leaving) return;
   // small labels
   const lab = [];
   for (const k of ['atk', 'def', 'spa', 'spd', 'spe']) if (m.boosts[k]) lab.push(T(k) + (m.boosts[k] > 0 ? '+' : '') + m.boosts[k]);
