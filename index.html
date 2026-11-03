@@ -229,12 +229,15 @@ class Mon {
     return s;
   }
   hasAbility(a) { return this.ability === a; }
+  get sizeT() { return clamp((Math.log(this.renderSize) - Math.log(32)) / (Math.log(650) - Math.log(32)), 0, 1); }   // 0 = tiny, 1 = giant
+  get evasion() { return 0.30 * (1 - this.sizeT) * clamp(this.spdN() / 150, 0.3, 1); }   // max 30% for tiny + fast
+  get sizeDR() { return 0.30 * this.sizeT; }   // up to 30% less damage for giants
   spdN() { return this.stat('spe') / STAT_MUL.other * 50 / this.level; }   // Speed judged as if Lv 50, so level doesn't flatten speed differences
 }
 
 // ===== Battle =====
 const STAT_MUL = {hp: 3, other: 2};
-const BOSS_HP = 1.5;   // extra HP for boss Eternamax on top of the global x3
+const BOSS_HP = 1.05;   // extra HP for boss Eternamax on top of the global x3
 const ARENA = {x: 0, y: 0, w: 2200, h: 1100};
 class Battle {
   constructor(teams, opts) {
@@ -599,20 +602,19 @@ class Battle {
       if (Math.abs(cross) > m.radius + p.r + 10) continue;
       p.seen = m;
       // smaller Pokémon spot and react more easily; giants hardly try
-      const sizeK = clamp(70 / m.renderSize, 0.15, 1.6);
-      const spe = m.spdN(); const chance = clamp(spe / (spe + 160) * sizeK, 0.03, 0.75) * (m.status === 'par' ? 0.3 : 1);
+      const chance = m.evasion * (m.status === 'par' ? 0.3 : 1);
       if (Math.random() < chance) {
         const s = cross >= 0 ? 1 : -1; const nx = -p.vy / spd * s, ny = p.vx / spd * s;
         // dodge for as long as it takes to clear the shot (a giant may simply not get out of the way in time)
         const need = m.radius + p.r + 6 - Math.abs(cross), v = mvSpd * 2;
-        m.dodgeT = clamp(need / v + 0.05, 0.15, 0.6); m.dodgeVX = nx * v; m.dodgeVY = ny * v; m.vx = m.dodgeVX; m.vy = m.dodgeVY;   // instant sidestep
+        m.dodgeT = clamp(need / v + 0.08, 0.15, 0.6); m.dodgeVX = nx * v; m.dodgeVY = ny * v; m.vx = m.dodgeVX; m.vy = m.dodgeVY;   // instant sidestep
       }
     }
   }
   checkBeamDodge(f, ax, ay, ux, uy, bw) {
     if (f.dodgeT > 0 || f.stunT > 0 || f.god) return;
-    const sizeK = clamp(70 / f.renderSize, 0.15, 1.6); const spe = f.spdN();
-    if (Math.random() < clamp(spe / (spe + 200) * sizeK, 0.02, 0.6)) {
+    const spe = f.spdN();
+    if (Math.random() < f.evasion * (f.status === 'par' ? 0.3 : 1)) {
       const cross = (f.x - ax) * uy - (f.y - ay) * ux, s = cross >= 0 ? 1 : -1;
       const v = clamp(60 + spe * 0.9, 60, 380) * 2, need = f.radius + bw + 6 - Math.abs(cross);
       f.dodgeT = clamp(need / v + 0.05, 0.15, 0.4); f.dodgeVX = uy * s * v; f.dodgeVY = -ux * s * v; f.vx = f.dodgeVX; f.vy = f.dodgeVY;
@@ -846,6 +848,7 @@ class Battle {
     if (f.god && !m.god) god0 = true;
     if (f.god === 'arceus' && m.god === 'trio') dmg = Math.max(1, Math.floor(dmg * 0.25));
     if (f.god === 'trio' && m.god === 'trio') dmg = Math.min(dmg, Math.floor(f.maxhp * 0.45));
+    if (!god0) dmg = Math.max(1, Math.floor(dmg * (1 - f.sizeDR)));   // big Pokémon shrug off up to 30%
     if (mv.id === 'judgment' && m.god === 'arceus') dmg = Math.max(dmg, f.hp);   // Arceus's Judgment always one-shots, gods and bosses included   // trio can't one-shot each other (2 hits per use, each capped at 45%)
     if (mv.ohko && f.god) god0 = true;
     return {dmg, e, crit, god0};
@@ -860,7 +863,8 @@ class Battle {
   heal(m, amt) { if (m.fainted) return; const h = Math.min(m.maxhp - m.hp, Math.floor(amt)); if (h > 0) { m.hp += h; this.float(m, '+' + h, '#6f6'); } }
   indirect(m, amt, label, recoil) {
     if (m.fainted || m.god) return 0; if (m.hasAbility('magicguard')) return 0;
-    if (m.sp.fm === 'Eternamax') amt *= 0.25;   // bosses shrug off most %-based chip damage (weather, poison, burn, recoil-free chip)
+    if (m.sp.fm === 'Eternamax') amt *= 0.25;
+    amt *= 1 - m.sizeDR;   // bosses shrug off most %-based chip damage (weather, poison, burn, recoil-free chip)
     if (this.reversalT > 0 && m.side === 0) { this.heal(m, amt); return 0; }
     const d = Math.max(1, Math.floor(amt)); m.hp = Math.max(0, m.hp - d); this.float(m, '-' + d + (label ? ' ' + label : ''), '#f99');
     if (m.hp <= 0) this.faint(m); return d;
