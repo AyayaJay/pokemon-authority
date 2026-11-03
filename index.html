@@ -500,7 +500,8 @@ class Battle {
     const spe = m.spdN();
     const heavy = (m.sp.w || 50) > 250 ? 0.8 : 1;
     // normal Pokémon top out at 380; the gods get their own higher range so Arceus is visibly faster than the trio
-    const base = m.god ? clamp(380 + (spe - 600) * 0.4, 380, 560) : clamp(60 + spe * 0.9, 60, 380);
+    // gods: trio 500, Arceus 600 (nature / Speed boosts nudge it a little)
+    const base = m.god ? (m.god === 'arceus' ? 600 : 500) * clamp(spe / (m.god === 'arceus' ? 952 : 652), 0.9, 1.15) : clamp(60 + spe * 0.9, 60, 380);
     const mvSpd = base * (m.dmaxT > 0 ? 0.6 : 1) * heavy;
     const agi = clamp(0.6 + spe / 200, 0.6, 1.8);
     const d = dist(m, f), toF = Math.atan2(f.y - m.y, f.x - m.x);
