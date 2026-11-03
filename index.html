@@ -89,8 +89,25 @@ const MAXFX = {Fire:{w:'sunnyday'},Water:{w:'raindance'},Rock:{w:'sandstorm'},Ic
 const PMD_URL = 'https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/';
 const SD_URL = 'https://play.pokemonshowdown.com/sprites/';
 const spriteCache = {};
-function loadImg(src) { return new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; }); }
-async function loadPMD(path) {
+function loadImg(src, cors) { return new Promise(res => { const i = new Image(); if (cors) i.crossOrigin = 'anonymous'; i.onload = () => res(i); i.onerror = () => res(null); i.src = src; }); }
+// Super shiny recolor (dark red, matched to the user's Another Red sprite): map brightness onto a red ramp
+const SUPER_RAMP = [[0, [10, 0, 0]], [60, [62, 0, 0]], [120, [150, 22, 18]], [180, [198, 38, 26]], [255, [236, 56, 32]]];
+function superRecolor(img) {
+  if (!img) return img;
+  try {
+    const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+    const d = x.getImageData(0, 0, c.width, c.height), p = d.data;
+    for (let i = 0; i < p.length; i += 4) {
+      if (!p[i + 3]) continue;
+      const L = 0.3 * p[i] + 0.59 * p[i + 1] + 0.11 * p[i + 2];
+      let k = 1; while (k < SUPER_RAMP.length - 1 && L > SUPER_RAMP[k][0]) k++;
+      const [l0, c0] = SUPER_RAMP[k - 1], [l1, c1] = SUPER_RAMP[k], t = clamp((L - l0) / (l1 - l0), 0, 1);
+      p[i] = c0[0] + (c1[0] - c0[0]) * t; p[i + 1] = c0[1] + (c1[1] - c0[1]) * t; p[i + 2] = c0[2] + (c1[2] - c0[2]) * t;
+    }
+    x.putImageData(d, 0, 0); return c;
+  } catch (e) { return img; }
+}
+async function loadPMD(path, sup) {
   const base = PMD_URL + 'sprite/' + path + '/';
   const r = await fetch(base + 'AnimData.xml'); if (!r.ok) throw 0;
   const xml = new DOMParser().parseFromString(await r.text(), 'text/xml');
@@ -107,7 +124,7 @@ async function loadPMD(path) {
     let r0 = raw[n], nm = n; let guard = 0;
     while (r0 && r0.copy && guard++ < 5) { nm = r0.copy; r0 = raw[nm]; }
     if (!r0) continue;
-    const img = await loadImg(base + nm + '-Anim.png'); if (!img) continue;
+    let img = await loadImg(base + nm + '-Anim.png', sup); if (!img) continue; if (sup) img = superRecolor(img);
     anims[n] = Object.assign({img, rows: Math.round(img.height / r0.fh)}, r0);
   }
   if (!anims.Walk && !anims.Idle) throw 0;
@@ -119,8 +136,9 @@ async function loadSD(s, shiny) {
   const b = await loadImg(SD_URL + (shiny ? 'gen5-back-shiny/' : 'gen5-back/') + id + '.png');
   return {type: 'sd', front: f, back: b || f};
 }
-function getSprite(spId, shiny) {
-  const key = spId + (shiny ? '*' : '');
+function getSprite(spId, shiny, sup) {
+  sup = !!sup && SP[spId] && SP[spId].base === 'arceus';
+  const key = spId + (sup ? '#' : shiny ? '*' : '');
   if (spriteCache[key]) return spriteCache[key];
   const s = SP[spId];
   const entry = {ready: false, data: null};
@@ -130,7 +148,7 @@ function getSprite(spId, shiny) {
     // chain: this form (PMD, Showdown) -> base species (PMD, Showdown)
     const chain = [s]; const b = SP[s.base]; if (b && b !== s) chain.push(b);
     for (const c of chain) {
-      if (!d && c.pmd) { try { d = await loadPMD(shiny && c.pmd.s ? c.pmd.s : c.pmd.p); } catch (e) { d = null; } }
+      if (!d && c.pmd) { try { d = await loadPMD(sup ? c.pmd.p : (shiny && c.pmd.s ? c.pmd.s : c.pmd.p), sup); } catch (e) { d = null; } }
       if (!d) { try { const sd = await loadSD(c, shiny); if (sd && sd.front) d = sd; } catch (e) { d = null; } }
       if (d) break;
     }
@@ -139,14 +157,16 @@ function getSprite(spId, shiny) {
   return entry;
 }
 const portraitCache = {};
-function getPortrait(spId, shiny) {
-  const key = spId + (shiny ? '*' : '');
+function getPortrait(spId, shiny, sup) {
+  sup = !!sup && SP[spId] && SP[spId].base === 'arceus';
+  const key = spId + (sup ? '#' : shiny ? '*' : '');
   if (portraitCache[key]) return portraitCache[key];
   const s = SP[spId]; const e = {img: null};
   portraitCache[key] = e;
   (async () => {
     let img = null;
-    if (s.pmd && s.pmd.pt) { if (shiny) img = await loadImg(PMD_URL + 'portrait/' + s.pmd.pt + (s.pmd.pt.includes('/') ? '/0001' : '/0000/0001') + '/Normal.png'); if (!img) img = await loadImg(PMD_URL + 'portrait/' + s.pmd.pt + '/Normal.png'); }
+    if (sup && s.pmd && s.pmd.pt) img = superRecolor(await loadImg(PMD_URL + 'portrait/' + s.pmd.pt + '/Normal.png', true));
+    if (!img && s.pmd && s.pmd.pt) { if (shiny) img = await loadImg(PMD_URL + 'portrait/' + s.pmd.pt + (s.pmd.pt.includes('/') ? '/0001' : '/0000/0001') + '/Normal.png'); if (!img) img = await loadImg(PMD_URL + 'portrait/' + s.pmd.pt + '/Normal.png'); }
     let crop = false; const b = SP[s.base];
     if (!img && b && b.pmd && b.pmd.pt) img = await loadImg(PMD_URL + 'portrait/' + b.pmd.pt + '/Normal.png');
     if (!img) { crop = true; img = await loadImg(SD_URL + (shiny ? 'gen5-shiny/' : 'gen5/') + (s.sd || s.id) + '.png'); }
@@ -184,7 +204,7 @@ class Mon {
     const nat = NATURES[this.set.nature]; if (nat && nat[0]) { this.stats[nat[0]] = Math.floor(this.stats[nat[0]] * 1.1); this.stats[nat[1]] = Math.floor(this.stats[nat[1]] * 0.9); }
     this.size = sp.fm === 'Eternamax' ? ARENA.w / 2 : sizeFor(sp.h); this.god = godKind(sp);   // Eternamax: about half the field
     if (!init) this.ability = toID(sp.ab[0]);
-    this.sprite = getSprite(sp.id, this.set.shiny);
+    this.sprite = getSprite(sp.id, this.set.shiny, this.set.superShiny);
   }
   resetVolatile() {
     this.boosts = {atk: 0, def: 0, spa: 0, spd: 0, spe: 0, accuracy: 0, evasion: 0};
@@ -615,7 +635,7 @@ class Battle {
       m.types = [type]; this.float(m, (LANG === 'ko' ? '레전드플레이트 → ' : 'Legend Plate → ') + tyName(type), TYPE_COLOR[type]);
       // Arceus visibly changes into that type's form
       const formId = type === 'Normal' ? 'arceus' : 'arceus' + type.toLowerCase();
-      if (SP[formId]) { m.dispId = formId; m.sprite = getSprite(formId, m.set.shiny); m.flashT = 0.6; this.addFx({kind: 'burst', x: m.x, y: m.y, t: 0, life: 0.6, color: TYPE_COLOR[type], r: m.renderSize * 0.8}); }
+      if (SP[formId]) { m.dispId = formId; m.sprite = getSprite(formId, m.set.shiny, m.set.superShiny); m.flashT = 0.6; this.addFx({kind: 'burst', x: m.x, y: m.y, t: 0, life: 0.6, color: TYPE_COLOR[type], r: m.renderSize * 0.8}); }
     }
     const label = z ? ZNAME[type] : max ? MAXNAME[type] : mvName(mv);
     this.texts.push({x: m.x, y: m.y - m.renderSize * 0.75 - 14, text: label, color: '#fff', t: 0, life: 0.9, tag: true, bg: TYPE_COLOR[type]});
@@ -1203,8 +1223,7 @@ function drawMon(b, m) {
   // shadow
   ctx.fillStyle = (m.fainted || m.leaving) ? 'rgba(0,0,0,' + (0.28 * (1 - clamp((m.faintT - 1.4) / 0.3, 0, 1))) + ')' : 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(m.x, m.y + sz * 0.22, sz * 0.32, sz * 0.11, 0, 0, Math.PI * 2); ctx.fill();
   let filt = [];
-  if (m.sp.base === 'arceus' && m.set.superShiny) filt.push('brightness(0.45) sepia(1) saturate(20) hue-rotate(-33deg) brightness(0.6) contrast(1.3)');
-  else if (m.set.shiny && m.sp.base === 'arceus') filt.push('sepia(1) saturate(2.6) hue-rotate(-8deg) brightness(1.08)');
+  if (!m.set.superShiny && m.set.shiny && m.sp.base === 'arceus') filt.push('sepia(1) saturate(2.6) hue-rotate(-8deg) brightness(1.08)');
   if (frozen) filt.push('grayscale(1)');
   if (m.flashT > 0 && Math.floor(m.flashT * 20) % 2 === 0) filt.push('brightness(2.2)');
   if (m.tera) filt.push('drop-shadow(0 0 6px ' + TYPE_COLOR[m.tera] + ')');
@@ -1351,7 +1370,7 @@ function drawText(t) {
   ctx.globalAlpha = 1;
 }
 function portrait(m, x, y, s) {
-  const p = getPortrait(m.dispId || m.sp.id, m.set.shiny);
+  const p = getPortrait(m.dispId || m.sp.id, m.set.shiny, m.set.superShiny);
   ctx.fillStyle = '#dfe9f7'; rr(x, y, s, s, 6); ctx.fill();
   if (p.img) { ctx.imageSmoothingEnabled = false; if (p.crop) ctx.drawImage(p.img, 16, 10, 64, 64, x + 2, y + 2, s - 4, s - 4); else ctx.drawImage(p.img, x + 2, y + 2, s - 4, s - 4); }
   if (m.fainted) { ctx.fillStyle = 'rgba(0,0,0,0.55)'; rr(x, y, s, s, 6); ctx.fill(); }
@@ -1604,7 +1623,7 @@ function importSave() {
 function begin() {
   const st = SAVE.settings;
   const teams = SAVE.teams.map(t => t.map(s => JSON.parse(JSON.stringify(s))));
-  for (const t of teams) for (const s of t) getSprite(s.id, s.shiny);
+  for (const t of teams) for (const s of t) getSprite(s.id, s.shiny, s.superShiny);
   startBattle(teams, {swapCD: st.swapCD, level: st.level, auth: st.auth, antiMode: st.antiMode}, (result, rematch) => {
     SAVE.record[result] = (SAVE.record[result] || 0) + 1; persist();
     if (rematch) begin(); else { document.body.classList.remove('inbattle'); try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {} cv.style.display = 'none'; $('#setup').style.display = 'block'; renderSetup(); }
