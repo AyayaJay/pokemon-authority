@@ -83,7 +83,8 @@ function sizeFor(h) { return clamp(50 * Math.pow(Math.max(h, 0.05) / 0.4, 0.7), 
 const ZNAME = {Normal:'Breakneck Blitz',Fire:'Inferno Overdrive',Water:'Hydro Vortex',Electric:'Gigavolt Havoc',Grass:'Bloom Doom',Ice:'Subzero Slammer',Fighting:'All-Out Pummeling',Poison:'Acid Downpour',Ground:'Tectonic Rage',Flying:'Supersonic Skystrike',Psychic:'Shattered Psyche',Bug:'Savage Spin-Out',Rock:'Continental Crush',Ghost:'Never-Ending Nightmare',Dragon:'Devastating Drake',Dark:'Black Hole Eclipse',Steel:'Corkscrew Crash',Fairy:'Twinkle Tackle'};
 const MAXNAME = {Normal:'Max Strike',Fire:'Max Flare',Water:'Max Geyser',Electric:'Max Lightning',Grass:'Max Overgrowth',Ice:'Max Hailstorm',Fighting:'Max Knuckle',Poison:'Max Ooze',Ground:'Max Quake',Flying:'Max Airstream',Psychic:'Max Mindstorm',Bug:'Max Flutterby',Rock:'Max Rockfall',Ghost:'Max Phantasm',Dragon:'Max Wyrmwind',Dark:'Max Darkness',Steel:'Max Steelspike',Fairy:'Max Starfall'};
 const STRUGGLE = {id: 'struggle', n: 'Struggle', ko: '발버둥', t: '???', c: 'P', bp: 50, a: 0, pp: 1, pr: 0, tg: 'normal', f: ['ct'], rcl: 0.25, z: 0, mx: 0};
-const ZID = {Normal:'breakneckblitz',Fire:'infernooverdrive',Water:'hydrovortex',Electric:'gigavolthavoc',Grass:'bloomdoom',Ice:'subzeroslammer',Fighting:'alloutpummeling',Poison:'aciddownpour',Ground:'tectonicrage',Flying:'supersonicskystrike',Psychic:'shatteredpsyche',Bug:'savagespinout',Rock:'continentalcrush',Ghost:'neverendingnightmare',Dragon:'devastatingdrake',Dark:'blackholeeclipse',Steel:'corkscrewcrash',Fairy:'twinkletackle'};
+const ZID = {'???':'breakneckblitz',Normal:'breakneckblitz',Fire:'infernooverdrive',Water:'hydrovortex',Electric:'gigavolthavoc',Grass:'bloomdoom',Ice:'subzeroslammer',Fighting:'alloutpummeling',Poison:'aciddownpour',Ground:'tectonicrage',Flying:'supersonicskystrike',Psychic:'shatteredpsyche',Bug:'savagespinout',Rock:'continentalcrush',Ghost:'neverendingnightmare',Dragon:'devastatingdrake',Dark:'blackholeeclipse',Steel:'corkscrewcrash',Fairy:'twinkletackle'};
+MAXNAME['???'] = 'Max Strike'; ZNAME['???'] = 'Breakneck Blitz';
 const MAXID = {}; for (const t in MAXNAME) MAXID[t] = toID(MAXNAME[t]);
 const MAXFX = {Fire:{w:'sunnyday'},Water:{w:'raindance'},Rock:{w:'sandstorm'},Ice:{w:'snow'},Normal:{foe:{spe:-1}},Fighting:{self:{atk:1}},Flying:{self:{spe:1}},Poison:{self:{spa:1}},Ground:{self:{spd:1}},Steel:{self:{def:1}},Dragon:{foe:{atk:-1}},Ghost:{foe:{def:-1}},Dark:{foe:{spd:-1}},Bug:{foe:{spa:-1}}};
 
@@ -248,7 +249,7 @@ class Battle {
     }));
     this.time = 0; this.boss = this.sides[1].mons.some(m => m.sp.fm === 'Eternamax'); this.limit = this.boss ? Infinity : 300; this.projs = []; this.fx = []; this.texts = []; this.weather = null; this.weatherT = 0;
     this.timeStopT = 0; this.reversalT = 0; this.aiming = 0; this.over = null; this.banner = null; this.bannerT = 0;
-    this.shake = 0; this.scenes = []; this.pendingHits = []; this.fainting = []; this.overPending = null;
+    this.shake = 0; this.scenes = []; this.prAnims = []; this.pendingHits = []; this.fainting = []; this.overPending = null;
     for (const s of this.sides) this.enter(s, 0, true);
   }
   act(side) { const s = this.sides[side]; return s.mons[s.active]; }
@@ -260,6 +261,7 @@ class Battle {
     m.cd = clamp(0.25 + 60 / Math.max(1, m.spdN()), 0.3, 1.6); m.flashT = 0.4;
     this.addFx({kind: 'ball', x: m.x, y: m.y, t: 0, life: 0.45, color: '#fff'});
     if (!first) this.say(spName(m.sp) + '!');
+    if (typeof playCry === 'function') playCry(m.sp);
     if (m.set.shiny) for (let i = 0; i < 10; i++) this.addFx({kind: 'shine', x: m.x + rnd(-50, 50), y: m.y + rnd(-60, 30), t: -i * 0.07, life: 0.6});
     this.pendingEntry = m;
   }
@@ -677,19 +679,22 @@ class Battle {
     let animId = z ? ZID[type] : max ? MAXID[type] : mv.id;
     if (mv.id === 'judgment' && m.sp.base === 'arceus') animId = 'judgment';
     let anim = null;
-    if (typeof sdHas === 'function' && sdHas(animId)) anim = sdPlay(this, animId, m, del === 'self' ? m : f, del !== 'proj');
+    // sprite animation from PokéRogue if there is one; Showdown's as a fallback (Z / Max moves etc.)
+    if (typeof prHas === 'function' && prHas(animId)) anim = prPlay(this, animId, m, del === 'self' ? m : f, del !== 'proj');
+    else if (typeof sdHas === 'function' && sdHas(animId)) anim = sdPlay(this, animId, m, del === 'self' ? m : f, del !== 'proj');
+    const hitAt = base => anim && anim.len ? clamp(anim.len * 0.5, base, 0.9) : base;
     if (mv.c === 'X' && del === 'self') { this.applyStatusMove(m, f, mv, !!anim); return; }
     const pkt = {owner: m, mv, type, z, max, info, pr: info.pr, anim: !!anim};
     const later = (sec, fn) => { if (anim) this.pendingHits.push({t: this.time + sec, side: m.side, fn: () => { if (!m.fainted && !f.fainted && this.act(f.side) === f) fn(); }}); else fn(); };
     if (del === 'melee') {
       if (!anim) this.addFx({kind: 'lunge', m, t: 0, life: 0.18, tx: f.x, ty: f.y});
-      later(0.3, () => { if (dist(m, f) <= this.meleeRange(m, f) * (anim ? 1.6 : 1.35)) this.hit(pkt, f); else this.float(m, T('miss'), '#ccc'); if (Math.random() < 0.7) m.retreatT = rnd(0.25, 0.5); });
+      later(hitAt(0.3), () => { if (dist(m, f) <= this.meleeRange(m, f) * (anim ? 1.8 : 1.35)) this.hit(pkt, f); else this.float(m, T('miss'), '#ccc'); if (Math.random() < 0.7) m.retreatT = rnd(0.25, 0.5); });
     } else if (del === 'beam' || del === 'field') {
       if (!anim) this.addFx({kind: 'beam', x1: m.x, y1: m.y, x2: f.x, y2: f.y, t: 0, life: 0.35, color: TYPE_COLOR[type], w: (z || max || mv.god) ? 26 : 12});
       const inRange = del === 'field' || dist(m, f) <= info.range + f.radius + m.radius || z || max;
       const bx = f.x - m.x, by = f.y - m.y, bl = Math.hypot(bx, by) || 1, ax = m.x, ay = m.y, bw = (z || max || mv.god) ? 40 : 18;
       if (del === 'beam' && !z && !max && !mv.god) this.checkBeamDodge(f, ax, ay, bx / bl, by / bl, bw);
-      later(0.4, () => {
+      later(hitAt(0.4), () => {
         // beams fire along a fixed line: a target that moved out of the line is missed (small/fast ones can slip out, giants can't)
         const perp = Math.abs((f.x - ax) * (by / bl) - (f.y - ay) * (bx / bl));
         const onLine = del === 'field' || z || max || mv.god || perp <= f.radius + bw;
@@ -697,7 +702,7 @@ class Battle {
       });
     } else if (del === 'aoe') {
       if (!anim) this.addFx({kind: 'ring', x: m.x, y: m.y, t: 0, life: 0.45, color: TYPE_COLOR[type], r: info.range + m.radius});
-      later(0.35, () => { if (dist(m, f) <= info.range + f.radius + m.radius) this.hit(pkt, f); else this.float(f, T('miss'), '#ccc'); });
+      later(hitAt(0.35), () => { if (dist(m, f) <= info.range + f.radius + m.radius) this.hit(pkt, f); else this.float(f, T('miss'), '#ccc'); });
     } else {
       const lead = 0.12; const tx = f.x + f.vx * lead, ty = f.y + f.vy * lead;
       const ang = Math.atan2(ty - m.y, tx - m.x);
@@ -706,7 +711,7 @@ class Battle {
     }
     if (mv.rc && !mv.god) { m.stunT = 1.6; this.float(m, T('recharge'), '#ccc'); }
   }
-  actionDelay(m) { return 1.6; }   // same attack rate for everyone; Speed affects movement instead
+  actionDelay(m) { return 1.1; }   // same attack rate for everyone; Speed affects movement instead
   speedFactor(m) { return clamp(Math.pow(120 / Math.max(1, m.stat('spe')), 0.5), 0.55, 1.6); }
   updateProjs(dt) {
     for (const p of this.projs) {
@@ -888,6 +893,7 @@ class Battle {
     if (m.fainted) return; m.fainted = true; m.hp = 0; m.state = 'idle'; m.cur = null; m.sdA = null;
     if (m.dmaxT > 0) { m.dmaxT = 0; m.maxhp /= 2; if (m.preG) { m.sp = m.preG; m.sprite = getSprite(m.sp.id, m.set.shiny); m.preG = null; } }
     m.faintT = 0; this.fainting.push(m);
+    if (typeof playCry === 'function') playCry(m.sp, 0.8);
     this.float(m, spName(m.sp) + ' ' + T('fainted'), '#fff', true);
     const s = this.sides[m.side];
     const left = s.mons.filter(x => !x.fainted);
@@ -1140,6 +1146,174 @@ function drawSDScenes(b, layer) {
   if (layer === 'fg') b.scenes = b.scenes.filter(sc => (b.time - sc.t0) * 1000 < sc.len + 100);
 }
 </script>
+<script>// ===== PokéRogue sprite move animations + sound (assets: pagefaultgames/pokerogue-assets, CC BY-NC-SA 4.0) =====
+// Animations come from the Gen 5 animation project via PokéRogue. Each animation frame lists "cels": the user,
+// the target, and pieces of a 96px sprite sheet, positioned in a space where the user is at (0,0) and the
+// target at (128,-64). We map that space onto the real positions of the two Pokémon in our top-down arena.
+const PR_BASE = 'https://raw.githubusercontent.com/pagefaultgames/pokerogue-assets/fb8ccb6d0703ffe48cdf80a8102d5ed943c82dba/';
+const PR_FRAME_MS = 36;               // original is 50ms/frame; a bit faster for real-time battles
+let PRA = null;                        // animation table, loaded from pranims.json
+(function loadPRA() {
+  try { fetch('pranims.json').then(r => r.ok ? r.json() : null).then(j => { PRA = j; }).catch(() => {}); } catch (e) {}
+})();
+const prImgCache = {};
+function prImg(name, folder) {
+  const key = folder + '/' + name;
+  if (!prImgCache[key]) { const i = new Image(); i.crossOrigin = 'anonymous'; i.src = PR_BASE + folder + '/' + encodeURIComponent(name) + '.png'; prImgCache[key] = i; }
+  return prImgCache[key];
+}
+function prHas(id) { return !!(PRA && PRA[id]); }
+
+// ---------- audio ----------
+const AUDIO = {sfx: 0.7, music: 0.35, muted: false};
+const sndCache = {};
+let audioUnlocked = false;
+function unlockAudio() { audioUnlocked = true; }
+function playSound(url, vol, rate) {
+  if (AUDIO.muted || !audioUnlocked || !AUDIO.sfx) return;
+  try {
+    let base = sndCache[url]; if (!base) { base = new Audio(url); base.preload = 'auto'; sndCache[url] = base; }
+    const a = base.cloneNode(); a.volume = clamp((vol ?? 1) * AUDIO.sfx, 0, 1);
+    a.playbackRate = clamp(rate ?? 1, 0.5, 2); a.preservesPitch = false; a.mozPreservesPitch = false; a.webkitPreservesPitch = false;
+    a.play().catch(() => {});
+  } catch (e) {}
+}
+function cryURL(sp) {
+  const form = sp.fm ? '-' + sp.fm.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^gmax$/, 'gigantamax') : '';
+  return {main: PR_BASE + 'audio/cry/' + sp.num + form.replace('-gmax', '-gigantamax') + '.m4a', base: PR_BASE + 'audio/cry/' + sp.num + '.m4a'};
+}
+function playCry(sp, rate, vol) {
+  if (AUDIO.muted || !audioUnlocked) return;
+  const u = cryURL(sp);
+  const a = new Audio(u.main); a.volume = clamp((vol ?? 0.6) * AUDIO.sfx, 0, 1); a.playbackRate = rate || 1; a.preservesPitch = false; a.webkitPreservesPitch = false;
+  a.onerror = () => { if (u.main !== u.base) { const b = new Audio(u.base); b.volume = a.volume; b.playbackRate = a.playbackRate; b.preservesPitch = false; b.play().catch(() => {}); } };
+  a.play().catch(() => {});
+}
+let bgm = null, bgmName = null;
+function playMusic(name) {
+  if (bgmName === name && bgm) { if (!AUDIO.muted && audioUnlocked && bgm.paused) bgm.play().catch(() => {}); return; }
+  stopMusic(); bgmName = name;
+  if (!name) return;
+  bgm = new Audio(PR_BASE + 'audio/bgm/' + name + '.mp3'); bgm.loop = true; bgm.volume = AUDIO.music;
+  if (!AUDIO.muted && audioUnlocked) bgm.play().catch(() => {});
+}
+function stopMusic() { if (bgm) { try { bgm.pause(); } catch (e) {} } bgm = null; bgmName = null; }
+function setMuted(m) { AUDIO.muted = m; if (bgm) { if (m) bgm.pause(); else bgm.play().catch(() => {}); } }
+function pickMusic(teams) {
+  const foes = teams[1].map(s => SP[s.id]);
+  if (foes.some(s => s.fm === 'Eternamax')) return 'battle_legendary_eternatus_p2';
+  if (foes.some(s => s.base === 'arceus')) return 'battle_legendary_arceus';
+  if (foes.some(s => s.base === 'giratina')) return 'battle_legendary_giratina';
+  if (foes.some(s => s.base === 'dialga' || s.base === 'palkia')) return 'battle_legendary_dia_pal';
+  if (foes.some(s => s.base === 'eternatus')) return 'battle_legendary_eternatus_p1';
+  const pool = ['battle_kanto_gym', 'battle_johto_gym', 'battle_hoenn_gym', 'battle_kanto_champion', 'battle_johto_champion', 'battle_champion_alder', 'battle_champion_iris', 'battle_hoenn_elite'];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// ---------- animation playback ----------
+class PRAnim {
+  constructor(b, id, user, target, dynamic) {
+    this.b = b; this.a = PRA[id]; this.t0 = b.time; this.user = user; this.target = target; this.dynamic = dynamic;
+    this.img = this.a.g ? prImg(this.a.g, 'images/battle_anims') : null;
+    this.n = this.a.f.length; this.len = this.n * PR_FRAME_MS / 1000;
+    this.fired = {}; this.bg = null;
+    this.ux = user.x; this.uy = user.y; this.tx = target.x; this.ty = target.y;
+    this.self = user === target;
+  }
+  frameIndex() { return Math.floor((this.b.time - this.t0) * 1000 / PR_FRAME_MS); }
+  // map anim-space point to world, given focus
+  frame() {
+    if (this.dynamic) { this.ux = this.user.x; this.uy = this.user.y; if (!this.self) { this.tx = this.target.x; this.ty = this.target.y; } }
+    let dx = this.tx - this.ux, dy = this.ty - this.uy;
+    if (this.self) { const f = this.b.foe(this.user); dx = (f ? f.x - this.ux : 1) || 1; dy = 0; }
+    const mir = dx < 0; const fx = mir ? -1 : 1;
+    // rotation from the (mirrored) anim vector (128,-64) to the real direction
+    const vx = 128 * fx, vy = -64, va = Math.atan2(vy, vx), wa = Math.atan2(dy, dx);
+    let rot = wa - va; while (rot > Math.PI) rot -= 2 * Math.PI; while (rot < -Math.PI) rot += 2 * Math.PI;
+    const len = Math.max(40, Math.hypot(dx, dy)), sk = len / Math.hypot(128, 64);
+    const kU = clamp(this.user.renderSize / 70, 1, 4), kT = clamp((this.self ? this.user : this.target).renderSize / 70, 1, 4);
+    return {mir, fx, rot, sk, kU, kT, cos: Math.cos(rot), sin: Math.sin(rot)};
+  }
+  place(c, F) {
+    const x = c[1], y = c[2], focus = c[12];
+    if (focus === 2) return {x: this.ux + x * F.fx * F.kU, y: this.uy + y * F.kU - this.user.renderSize * 0.25, k: F.kU, rot: 0};                       // around the user
+    if (focus === 1 || this.self) { const T = this.self ? {x: this.ux, y: this.uy, s: this.user.renderSize} : {x: this.tx, y: this.ty, s: this.target.renderSize};
+      return {x: T.x + (x - 128) * F.fx * F.kT, y: T.y + (y + 64) * F.kT - T.s * 0.25, k: F.kT, rot: 0}; }                                               // around the target
+    const px = x * F.fx, py = y;                                                                                                                            // travelling from user to target
+    return {x: this.ux + F.sk * (px * F.cos - py * F.sin), y: this.uy - this.user.renderSize * 0.2 + F.sk * (px * F.sin + py * F.cos), k: (F.kU + F.kT) / 2, rot: F.rot};
+  }
+  events(i) {
+    const evs = this.a.e[i]; if (!evs || this.fired[i]) return; this.fired[i] = true;
+    for (const e of evs) {
+      if (e[0] === 's') { if (e[1]) playSound(PR_BASE + 'audio/battle_anims/' + encodeURIComponent(e[1]), e[2] / 100 * 0.8, e[3] / 100); else playCry(this.user.sp, e[3] / 100, e[2] / 100 * 0.6); }
+      else if (e[0] === 'a') this.bg = {img: e[1] ? prImg(e[1], 'images/battle_anims') : null, x: e[2], y: e[3], op: e[4] / 255, from: null};
+      else if (e[0] === 'u' && this.bg) { this.bg.from = {x: this.bg.x, y: this.bg.y, op: this.bg.op, t: this.b.time}; this.bg.to = {x: e[1], y: e[2], op: e[3] / 255, d: Math.max(1, e[4]) * 3 * 16.7 / 1000 * (PR_FRAME_MS / 50)}; }
+    }
+  }
+  bgState() {
+    const g = this.bg; if (!g) return null;
+    if (g.from) { const p = clamp((this.b.time - g.from.t) / g.to.d, 0, 1); g.x = g.from.x + (g.to.x - g.from.x) * p; g.y = g.from.y + (g.to.y - g.from.y) * p; g.op = g.from.op + (g.to.op - g.from.op) * p; if (p >= 1) g.from = null; }
+    return g;
+  }
+  // visual override for the user/target sprite during the animation
+  monVisual(m) {
+    const i = this.frameIndex(); if (i < 0 || i >= this.n) return null;
+    const F = this.frame(); const want = m === this.user ? 0 : 1;
+    if (this.self && want === 1) return null;
+    const c = this.a.f[i].find(x => x[0] === want); if (!c) return null;
+    const p = this.place(c, F);
+    const home = want === 0 ? this.place([0, 0, 0, 100, 100, 0, 0, 1, 0, 255, 0, 1, 2], F) : this.place([1, 128, -64, 100, 100, 0, 0, 1, 0, 255, 0, 1, 1], F);
+    return {dx: p.x - home.x, dy: p.y - home.y, scale: c[4] / 100, op: c[7] ? c[9] / 255 : 0};
+  }
+  draw(ctx, layer) {
+    const i = this.frameIndex(); if (i < 0 || i >= this.n) return;
+    for (let k = 0; k <= i; k++) this.events(k);
+    if (layer === 'bg') {
+      const g = this.bgState();
+      if (g && g.op > 0.01) {
+        ctx.save(); ctx.globalAlpha = clamp(g.op, 0, 1) * 0.9;
+        const r = {x: cam.x - VIEW.w / 2 / cam.z, y: cam.y - VIEW.h / 2 / cam.z, w: VIEW.w / cam.z, h: VIEW.h / cam.z};
+        if (g.img && g.img.complete && g.img.naturalWidth) {
+          const s = r.h / g.img.naturalHeight * 1.05, iw = g.img.naturalWidth * s, ox = -((g.x * s * 0.5) % iw);
+          for (let x = r.x + ox - iw; x < r.x + r.w; x += iw) ctx.drawImage(g.img, x, r.y, iw, r.h);
+        } else { ctx.fillStyle = '#000'; ctx.fillRect(r.x, r.y, r.w, r.h); }
+        ctx.restore();
+      }
+      return;
+    }
+    const img = this.img; if (!img || !img.complete || !img.naturalWidth) return;
+    const cols = Math.max(1, Math.floor(img.naturalWidth / 96));
+    const F = this.frame();
+    for (const c of this.a.f[i]) {
+      if (c[0] !== 2 || !c[7]) continue;
+      const pri = c[11]; if ((layer === 'back') !== (pri === 2)) continue;   // priority 2 = drawn behind the Pokémon
+      const p = this.place(c, F);
+      ctx.save();
+      ctx.globalAlpha = clamp(c[9] / 255, 0, 1);
+      if (c[10] === 1) ctx.globalCompositeOperation = 'lighter';
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot - (c[5] || 0) * Math.PI / 180 * F.fx);
+      ctx.scale((c[3] / 100) * p.k * (c[6] ? -1 : 1) * F.fx, (c[4] / 100) * p.k);
+      ctx.imageSmoothingEnabled = false;
+      const gf = c[8], sx = (gf % cols) * 96, sy = Math.floor(gf / cols) * 96;
+      ctx.drawImage(img, sx, sy, 96, 96, -48, -48, 96, 96);
+      ctx.restore();
+    }
+  }
+  get done() { return this.frameIndex() >= this.n + 2; }
+}
+function prPlay(b, id, user, target, dynamic) {
+  if (!prHas(id)) return null;
+  const a = new PRAnim(b, id, user, target || user, dynamic);
+  b.prAnims.push(a); user.prA = a; if (target && target !== user) target.prA = a;
+  return a;
+}
+function prMonVisual(b, m) { const a = m.prA; if (!a) return null; if (a.done) { m.prA = null; return null; } return a.monVisual(m); }
+function drawPRAnims(b, layer) {
+  for (const a of b.prAnims) a.draw(ctx, layer);
+  if (layer === 'front') b.prAnims = b.prAnims.filter(a => !a.done);
+}
+</script>
 <script>// ===== Renderer & battle input =====
 const W = 1280, H = 720;
 const VIEW = {x: 96, y: 112, w: 1088, h: 458};
@@ -1176,6 +1350,8 @@ function initCanvas() {
   });
 }
 function startBattle(teams, opts, endCb) {
+  unlockAudio(); try { AUDIO.muted = localStorage.getItem('pkrt_muted') === '1'; } catch (e) {}
+  playMusic(pickMusic(teams));
   battle = new Battle(teams, opts); onBattleEnd = endCb; speedMul = 1;
   document.getElementById('setup').style.display = 'none'; cv.style.display = 'block'; document.body.classList.add('inbattle'); if (window._fitCanvas) window._fitCanvas();
   try { const de = document.documentElement; if (de.requestFullscreen && window.matchMedia('(pointer:coarse)').matches) de.requestFullscreen().then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {})).catch(() => {}); } catch (e) {}
@@ -1218,12 +1394,15 @@ function draw() {
   ctx.translate(VIEW.x + VIEW.w / 2, VIEW.y + VIEW.h / 2); ctx.scale(cam.z, cam.z); ctx.translate(-cam.x, -cam.y);
   drawArena(b);
   for (let s = 0; s < 2; s++) { const m = b.act(s); if (m.state === 'windup' && m.cur && m.cur.info.del !== 'self' && m.cur.info.wind > 0.15) { const f = b.foe(m); ctx.strokeStyle = s === 0 ? 'rgba(63,169,255,0.8)' : 'rgba(255,59,59,0.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(f.x, f.y + f.radius * 0.5, f.radius * 1.1, f.radius * 0.45, 0, 0, Math.PI * 2); ctx.stroke(); } }
+  drawPRAnims(b, 'bg');
   drawSDScenes(b, 'bg');
+  drawPRAnims(b, 'back');
   const mons = [b.act(0), b.act(1)].filter(m => !m.fainted && !m.leaving).concat(b.fainting).sort((a, c) => a.y - c.y);
   for (const m of mons) drawMon(b, m);
   for (const p of b.projs) drawProj(p);
   for (const f of b.fx) if (f.kind !== 'clock' && f.kind !== 'erase') drawFx(b, f);
   drawSDScenes(b, 'fg');
+  drawPRAnims(b, 'front');
   for (const t of b.texts) if (!t.center) drawText(t);
   ctx.restore();
   // ---- screen ----
@@ -1275,7 +1454,7 @@ function animFrame(a, t, loop) {
   for (let i = 0; i < a.dur.length; i++) { if (f < a.dur[i]) return i; f -= a.dur[i]; } return a.dur.length - 1;
 }
 function drawMon(b, m) {
-  const sv = sdMonVisual(b, m);
+  const sv = prMonVisual(b, m) || sdMonVisual(b, m);
   let sz = m.renderSize * (sv ? clamp(sv.scale, 0.2, 3) : 1); const frozen = b.timeStopT > 0 && m.side === 1 && m.god !== 'arceus';
   // shadow
   ctx.fillStyle = (m.fainted || m.leaving) ? 'rgba(0,0,0,' + (0.28 * (1 - clamp((m.faintT - 1.4) / 0.3, 0, 1))) + ')' : 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(m.x, m.y + sz * 0.22, sz * 0.32, sz * 0.11, 0, 0, Math.PI * 2); ctx.fill();
@@ -1480,7 +1659,7 @@ function drawHUD(b) {
       if (m.cur && m.cur.i === i) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke(); }
       ctx.fillStyle = 'rgba(0,0,0,0.35)'; rr(x + 150, y + 6, 74, 30, 15); ctx.fill();
       ctx.fillStyle = '#fff'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'left';
-      let nm = (m.dmaxT > 0) ? (mv.c === 'X' ? 'Max Guard' : MAXNAME[mv.t]) : mvName(mv); if (nm.length > 13) nm = nm.slice(0, 12) + '…';
+      let nm = ((m.dmaxT > 0) ? (mv.c === 'X' ? 'Max Guard' : MAXNAME[mv.t]) : mvName(mv)) || mvName(mv) || '?'; if (nm.length > 13) nm = nm.slice(0, 12) + '…';
       ctx.fillText(nm, x + 14, y + 27); ctx.textAlign = 'center'; ctx.font = 'bold 14px sans-serif'; ctx.fillText(sl.pp + '/' + (mv.pp ? Math.floor(mv.pp * 8 / 5) : 1), x + 187, y + 26);
       ctx.globalAlpha = 1;
     });
@@ -1504,6 +1683,9 @@ function drawHUD(b) {
     ctx.fillText(ic + ' ' + T(a) + (a === 'anti' ? (b.opts.antiMode === 'reversal' ? '·R' : '·E') : ''), bx + 61, by + 23); ctx.globalAlpha = 1;
     if (!used) btn(bx, by, 122, 34, () => b.useAuthority(a));
   });
+  // sound toggle
+  ctx.fillStyle = 'rgba(255,255,255,0.9)'; rr(1180, 632, 90, 36, 8); ctx.fill(); ctx.fillStyle = '#16233f'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(AUDIO.muted ? '🔇' : '🔊', 1225, 657);
+  btn(1180, 632, 90, 36, () => { setMuted(!AUDIO.muted); try { localStorage.setItem('pkrt_muted', AUDIO.muted ? '1' : '0'); } catch (e) {} });
   // speed + forfeit
   ctx.fillStyle = '#0a1633'; rr(588, 676, 104, 36, 8); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(T('speed') + ' ' + speedMul + 'x', 640, 700);
   btn(588, 676, 104, 36, () => { speedMul = speedMul >= 3 ? 1 : speedMul + 1; });
@@ -1597,7 +1779,8 @@ function renderSetup() {
   [0, 1].forEach(side => cols.append(teamPanel(side)));
   root.append(cols);
   root.append(el('div', {className: 'startrow'}, el('button', {className: 'start', on: {click: begin}}, tr('▶ Start battle', '▶ 배틀 시작')),
-    el('div', {className: 'hint'}, tr('Tip: play in landscape. Sprites load from the internet (PMD Sprite Collab / Showdown).', '팁: 가로 화면 권장. 스프라이트는 인터넷에서 불러옵니다 (PMD Sprite Collab / Showdown).'))));
+    el('div', {className: 'hint'}, tr('Tip: play in landscape. Sprites load from the internet (PMD Sprite Collab / Showdown).', '팁: 가로 화면 권장. 스프라이트는 인터넷에서 불러옵니다 (PMD Sprite Collab / Showdown).')),
+    el('div', {className: 'hint'}, 'Credits: Pokémon © Nintendo / Game Freak / The Pokémon Company (non-commercial fan game). Sprites: PMD Sprite Collab, Pokémon Showdown. Move animations, sound effects, cries & music: PokéRogue assets (CC BY-NC-SA 4.0) incl. the Gen 5 Animation Project. Data: Pokémon Showdown / @pkmn, PokéAPI.')));
 }
 function teamPanel(side) {
   const team = SAVE.teams[side];
@@ -1689,7 +1872,7 @@ function begin() {
   for (const t of teams) for (const s of t) getSprite(s.id, s.shiny, s.superShiny);
   startBattle(teams, {swapCD: st.swapCD, level: st.level, auth: st.auth, antiMode: st.antiMode}, (result, rematch) => {
     SAVE.record[result] = (SAVE.record[result] || 0) + 1; persist();
-    if (rematch) begin(); else { document.body.classList.remove('inbattle'); try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {} cv.style.display = 'none'; $('#setup').style.display = 'block'; renderSetup(); }
+    if (rematch) begin(); else { stopMusic(); document.body.classList.remove('inbattle'); try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {} cv.style.display = 'none'; $('#setup').style.display = 'block'; renderSetup(); }
   });
 }
 window.addEventListener('load', () => { loadSave(); initCanvas(); renderSetup(); });
