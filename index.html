@@ -1387,8 +1387,12 @@ function drawHUD(b) {
     ctx.fillStyle = '#16233f'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'left';
     ctx.fillText(spName(m.sp) + (m.set.shiny ? ' ✨' : ''), tx, by + 28);
     ctx.font = 'bold 16px sans-serif'; ctx.fillText('Lv.' + m.level + '  ' + abName(m.ability), tx + 300, by + 28);
-    ctx.fillStyle = '#222'; rr(tx, by + 40, 400, 16, 4); ctx.fill(); ctx.fillStyle = hpColor(m.hp / m.maxhp); rr(tx + 2, by + 42, 396 * m.hp / m.maxhp, 12, 3); ctx.fill();
-    ctx.fillStyle = '#16233f'; ctx.font = 'bold 18px sans-serif'; ctx.fillText(Math.ceil(m.hp) + '/' + m.maxhp, tx + 408, by + 55);
+    // HP number gets its own space at the end of the panel; the bar fills the rest and the text shrinks if it's long
+    const hpTxt = Math.ceil(m.hp) + '/' + Math.ceil(m.maxhp), panelEnd = left ? bx + 540 : bx + 492;
+    let fs = 18; ctx.font = 'bold ' + fs + 'px sans-serif'; while (ctx.measureText(hpTxt).width > 150 && fs > 11) { fs--; ctx.font = 'bold ' + fs + 'px sans-serif'; }
+    const tw = ctx.measureText(hpTxt).width, barW = Math.max(200, panelEnd - tx - tw - 12);
+    ctx.fillStyle = '#222'; rr(tx, by + 40, barW, 16, 4); ctx.fill(); ctx.fillStyle = hpColor(m.hp / m.maxhp); rr(tx + 2, by + 42, (barW - 4) * m.hp / m.maxhp, 12, 3); ctx.fill();
+    ctx.fillStyle = '#16233f'; ctx.textAlign = 'right'; ctx.fillText(hpTxt, panelEnd, by + 55); ctx.textAlign = 'left';
     // type chips
     let cx = left ? bx : bx + 570 - 72 * m.teraTypes.length;
     for (const t of m.teraTypes) { ctx.fillStyle = TYPE_COLOR[t]; rr(cx, by + 76, 68, 20, 6); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.fillText((m.tera ? '◆' : '') + tyName(t), cx + 34, by + 91); cx += 72; }
@@ -1529,7 +1533,7 @@ function renderSetup() {
       el('option', {value: 'reversal', selected: st.antiMode === 'reversal'}, tr('Reversal (3s: damage heals you, foe boosts flip)', '반전 (3초: 받는 피해→회복, 적 능력 변화 반전)')),
       el('option', {value: 'erase', selected: st.antiMode === 'erase'}, tr('Erase (wipe foe attacks/boosts/weather/screens)', '소거 (적 공격·능력변화·날씨·벽 제거)')))),
     el('label', {}, tr(' Swap cooldown ', ' 교체 쿨타임 '), el('input', {type: 'number', min: 3, max: 60, value: st.swapCD, style: 'width:56px', on: {change: e => { st.swapCD = clamp(+e.target.value || 20, 3, 60); persist(); }}}), tr('s', '초')),
-    el('label', {}, ' Lv ', el('input', {type: 'number', min: 1, max: 100, value: st.level, style: 'width:56px', on: {change: e => { st.level = clamp(+e.target.value || 50, 1, 100); persist(); }}}))));
+    el('label', {}, ' Lv ', el('input', {type: 'number', min: 1, max: 1000, value: st.level, style: 'width:64px', on: {change: e => { st.level = clamp(+e.target.value || 50, 1, 1000); persist(); }}}))));
   const cols = el('div', {className: 'cols'});
   [0, 1].forEach(side => cols.append(teamPanel(side)));
   root.append(cols);
