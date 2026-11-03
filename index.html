@@ -228,7 +228,7 @@ class Battle {
     const side = this.sides.indexOf(s);
     s.active = idx; const m = s.mons[idx]; m.resetVolatile(); m.leaving = false; this.fainting = this.fainting.filter(x => x !== m);
     m.x = side === 0 ? ARENA.x + 620 : ARENA.x + ARENA.w - 620; m.y = ARENA.y + ARENA.h / 2 + rnd(-60, 60); m.vx = m.vy = 0; m.mode = null;
-    m.cd = 0.6; m.flashT = 0.4;
+    m.cd = 0.25 + this.actionDelay(m) * 0.45; m.flashT = 0.4;
     this.addFx({kind: 'ball', x: m.x, y: m.y, t: 0, life: 0.45, color: '#fff'});
     if (!first) this.say(spName(m.sp) + '!');
     if (m.set.shiny) for (let i = 0; i < 10; i++) this.addFx({kind: 'shine', x: m.x + rnd(-50, 50), y: m.y + rnd(-60, 30), t: -i * 0.07, life: 0.6});
@@ -346,6 +346,7 @@ class Battle {
     if (mv.f && mv.f.includes('ch') && !(mv.id === 'solarbeam' || mv.id === 'solarblade') ) wind += 0.9;
     if ((mv.id === 'solarbeam' || mv.id === 'solarblade') && this.weather !== 'sunnyday') wind += 0.9;
     let pr = mv.pr; if (m.hasAbility('prankster') && mv.c === 'X') pr += 1;
+    wind *= this.speedFactor(m);
     if (pr > 0) wind = 0.02; if (pr < 0) wind += 0.4;
     const range = del === 'melee' ? 0 : del === 'beam' ? 460 : del === 'aoe' ? 190 : del === 'field' ? 9999 : 400;
     return {del, wind, pr, range};
@@ -638,12 +639,13 @@ class Battle {
     } else {
       const lead = 0.12; const tx = f.x + f.vx * lead, ty = f.y + f.vy * lead;
       const ang = Math.atan2(ty - m.y, tx - m.x);
-      const spd = (info.pr > 0 ? 900 : 560) * (type === 'Electric' ? 1.3 : 1);
+      const spd = (info.pr > 0 ? 900 : 560) * (type === 'Electric' ? 1.3 : 1) * clamp(m.stat('spe') / 150, 0.8, 1.5);
       this.projs.push(Object.assign(pkt, {x: m.x, y: m.y, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd, r: 9 + (mv.bp || 40) / 16, left: info.range + 120, hidden: !!anim}));
     }
     if (mv.rc && !mv.god) { m.stunT = 1.6; this.float(m, T('recharge'), '#ccc'); }
   }
-  actionDelay(m) { const spe = m.stat('spe'); return 1.35 * clamp(0.55 + 1.5 * (70 / (70 + spe * 0.6)), 0.6, 2.4); }
+  actionDelay(m) { const spe = Math.max(1, m.stat('spe')); return clamp(1.8 * Math.pow(100 / spe, 0.6), 0.55, 3.4); }
+  speedFactor(m) { return clamp(Math.pow(120 / Math.max(1, m.stat('spe')), 0.5), 0.55, 1.6); }
   updateProjs(dt) {
     for (const p of this.projs) {
       if (this.timeStopT > 0 && p.owner.side === 1) continue;
