@@ -547,7 +547,8 @@ class Battle {
     else if (m.cur) {
       const info = m.cur.info;
       if (info.del === 'self' || info.del === 'field') { this.startWindup(m); this.drive(m, f, 0, 0, dt, agi, true); return; }
-      const need = info.del === 'melee' ? this.meleeRange(m, f) : info.del === 'aoe' ? info.range * 0.8 + f.radius : info.range * 0.85;
+      // ranges are measured from the attacker's body edge, so giant Pokémon aren't stuck out of range
+      const need = info.del === 'melee' ? this.meleeRange(m, f) : info.del === 'aoe' ? info.range * 0.8 + f.radius + m.radius : info.range * 0.85 + m.radius;
       if (d > need) {
         // approach on a curve while far away, straight in when close; melee users dash the last stretch
         const curve = clamp((d - need) / 300, 0, 1) * 0.6;
@@ -669,16 +670,16 @@ class Battle {
       later(0.3, () => { if (dist(m, f) <= this.meleeRange(m, f) * (anim ? 1.6 : 1.35)) this.hit(pkt, f); else this.float(m, T('miss'), '#ccc'); if (Math.random() < 0.7) m.retreatT = rnd(0.25, 0.5); });
     } else if (del === 'beam' || del === 'field') {
       if (!anim) this.addFx({kind: 'beam', x1: m.x, y1: m.y, x2: f.x, y2: f.y, t: 0, life: 0.35, color: TYPE_COLOR[type], w: (z || max || mv.god) ? 26 : 12});
-      const inRange = del === 'field' || dist(m, f) <= info.range + f.radius || z || max;
+      const inRange = del === 'field' || dist(m, f) <= info.range + f.radius + m.radius || z || max;
       later(0.4, () => { if (inRange) this.hit(pkt, f); else this.float(m, T('miss'), '#ccc'); });
     } else if (del === 'aoe') {
-      if (!anim) this.addFx({kind: 'ring', x: m.x, y: m.y, t: 0, life: 0.45, color: TYPE_COLOR[type], r: info.range});
-      later(0.35, () => { if (dist(m, f) <= info.range + f.radius) this.hit(pkt, f); else this.float(f, T('miss'), '#ccc'); });
+      if (!anim) this.addFx({kind: 'ring', x: m.x, y: m.y, t: 0, life: 0.45, color: TYPE_COLOR[type], r: info.range + m.radius});
+      later(0.35, () => { if (dist(m, f) <= info.range + f.radius + m.radius) this.hit(pkt, f); else this.float(f, T('miss'), '#ccc'); });
     } else {
       const lead = 0.12; const tx = f.x + f.vx * lead, ty = f.y + f.vy * lead;
       const ang = Math.atan2(ty - m.y, tx - m.x);
       const spd = (info.pr > 0 ? 900 : 560) * (type === 'Electric' ? 1.3 : 1) * clamp(m.spdN() / 150, 0.8, 1.5);
-      this.projs.push(Object.assign(pkt, {x: m.x, y: m.y, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd, r: 9 + (mv.bp || 40) / 16, left: info.range + 120, hidden: !!anim}));
+      this.projs.push(Object.assign(pkt, {x: m.x, y: m.y, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd, r: 9 + (mv.bp || 40) / 16, left: info.range + 120 + m.radius, hidden: !!anim}));
     }
     if (mv.rc && !mv.god) { m.stunT = 1.6; this.float(m, T('recharge'), '#ccc'); }
   }
