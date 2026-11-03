@@ -175,7 +175,7 @@ class Mon {
     const b = sp.bs, L = this.level;
     const st = (B) => Math.floor((2 * B + 31 + 21) * L / 100) + 5;
     const newMax = Math.floor((2 * b[0] + 31 + 21) * L / 100) + L + 10;
-    if (init) this.maxhp = newMax;
+    if (init) this.maxhp = newMax * (sp.fm === 'Eternamax' ? 3 : 1);   // Eternamax: boss HP (x3)
     this.stats = {atk: st(b[1]), def: st(b[2]), spa: st(b[3]), spd: st(b[4]), spe: st(b[5])};
     this.size = sp.fm === 'Eternamax' ? ARENA.w / 2 : sizeFor(sp.h); this.god = godKind(sp);   // Eternamax: about half the field
     if (!init) this.ability = toID(sp.ab[0]);
