@@ -499,7 +499,9 @@ class Battle {
     if (m.status === 'slp' || m.status === 'frz') { this.drive(m, f, 0, 0, dt, 1, true); return; }
     const spe = m.spdN();
     const heavy = (m.sp.w || 50) > 250 ? 0.8 : 1;
-    const mvSpd = clamp(60 + spe * 0.9, 60, 380) * (m.dmaxT > 0 ? 0.6 : 1) * heavy;
+    // normal Pokémon top out at 380; the gods get their own higher range so Arceus is visibly faster than the trio
+    const base = m.god ? clamp(380 + (spe - 600) * 0.4, 380, 560) : clamp(60 + spe * 0.9, 60, 380);
+    const mvSpd = base * (m.dmaxT > 0 ? 0.6 : 1) * heavy;
     const agi = clamp(0.6 + spe / 200, 0.6, 1.8);
     const d = dist(m, f), toF = Math.atan2(f.y - m.y, f.x - m.x);
     const ux = Math.cos(toF), uy = Math.sin(toF), px = -uy * m.strafe, py = ux * m.strafe;
