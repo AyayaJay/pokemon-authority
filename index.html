@@ -200,7 +200,7 @@ class Mon {
     const iv = this.set.ivs || [31, 31, 31, 31, 31, 31], ev = this.set.evs || [0, 0, 0, 0, 0, 0];
     const st = (B, i) => Math.floor((2 * B + iv[i] + ev[i] / 4) * L / 100) + 5;
     const newMax = Math.floor((2 * b[0] + iv[0] + ev[0] / 4) * L / 100) + L + 10;
-    if (init) this.maxhp = Math.floor(newMax * STAT_MUL.hp * (sp.fm === 'Eternamax' ? BOSS_HP : 1) * (godKind(sp) ? 3 : 1));   // global HP x3; Eternamax boss x3; gods x3   // everyone x1.5 HP for longer fights; Eternamax boss x3 on top
+    if (init) this.maxhp = Math.floor(newMax * STAT_MUL.hp * (sp.fm === 'Eternamax' ? BOSS_HP : 1));   // global HP x3 (gods included); Eternamax boss gets extra
     this.stats = {atk: st(b[1], 1), def: st(b[2], 2), spa: st(b[3], 3), spd: st(b[4], 4), spe: st(b[5], 5)};
     for (const k in this.stats) this.stats[k] *= STAT_MUL.other;   // global x2 (Speed too, but movement uses the original value)
     const nat = NATURES[this.set.nature]; if (nat && nat[0]) { this.stats[nat[0]] = Math.floor(this.stats[nat[0]] * 1.1); this.stats[nat[1]] = Math.floor(this.stats[nat[1]] * 0.9); }
@@ -824,6 +824,7 @@ class Battle {
     let god0 = false;
     if (f.god && !m.god) god0 = true;
     if (f.god === 'arceus' && m.god === 'trio') dmg = Math.max(1, Math.floor(dmg * 0.25));
+    if (f.god === 'trio' && m.god === 'trio') dmg = Math.min(dmg, Math.floor(f.maxhp * 0.45));   // trio can't one-shot each other (2 hits per use, each capped at 45%)
     if (mv.ohko && f.god) god0 = true;
     return {dmg, e, crit, god0};
   }
