@@ -200,7 +200,7 @@ class Mon {
     const iv = this.set.ivs || [31, 31, 31, 31, 31, 31], ev = this.set.evs || [0, 0, 0, 0, 0, 0];
     const st = (B, i) => Math.floor((2 * B + iv[i] + ev[i] / 4) * L / 100) + 5;
     const newMax = Math.floor((2 * b[0] + iv[0] + ev[0] / 4) * L / 100) + L + 10;
-    if (init) this.maxhp = Math.floor(newMax * STAT_MUL.hp * (sp.fm === 'Eternamax' ? 3 : 1) * (godKind(sp) ? 3 : 1));   // global HP x3; Eternamax boss x3; gods x3   // everyone x1.5 HP for longer fights; Eternamax boss x3 on top
+    if (init) this.maxhp = Math.floor(newMax * STAT_MUL.hp * (sp.fm === 'Eternamax' ? BOSS_HP : 1) * (godKind(sp) ? 3 : 1));   // global HP x3; Eternamax boss x3; gods x3   // everyone x1.5 HP for longer fights; Eternamax boss x3 on top
     this.stats = {atk: st(b[1], 1), def: st(b[2], 2), spa: st(b[3], 3), spd: st(b[4], 4), spe: st(b[5], 5)};
     for (const k in this.stats) this.stats[k] *= STAT_MUL.other;   // global x2 (Speed too, but movement uses the original value)
     const nat = NATURES[this.set.nature]; if (nat && nat[0]) { this.stats[nat[0]] = Math.floor(this.stats[nat[0]] * 1.1); this.stats[nat[1]] = Math.floor(this.stats[nat[1]] * 0.9); }
@@ -234,6 +234,7 @@ class Mon {
 
 // ===== Battle =====
 const STAT_MUL = {hp: 3, other: 2};
+const BOSS_HP = 1.5;   // extra HP for boss Eternamax on top of the global x3
 const ARENA = {x: 0, y: 0, w: 2200, h: 1100};
 class Battle {
   constructor(teams, opts) {
@@ -241,7 +242,7 @@ class Battle {
     this.sides = teams.map((t, i) => ({
       mons: t.map(set => new Mon(set, i, opts.level)), active: 0, swapCD: 0, used: {}, authUsed: {}, screens: {}, choosing: false, chooseT: 0,
     }));
-    this.time = 0; this.limit = 300; this.projs = []; this.fx = []; this.texts = []; this.weather = null; this.weatherT = 0;
+    this.time = 0; this.boss = this.sides[1].mons.some(m => m.sp.fm === 'Eternamax'); this.limit = this.boss ? Infinity : 300; this.projs = []; this.fx = []; this.texts = []; this.weather = null; this.weatherT = 0;
     this.timeStopT = 0; this.reversalT = 0; this.aiming = 0; this.over = null; this.banner = null; this.bannerT = 0;
     this.shake = 0; this.scenes = []; this.pendingHits = []; this.fainting = []; this.overPending = null;
     for (const s of this.sides) this.enter(s, 0, true);
@@ -395,6 +396,7 @@ class Battle {
         sc += bp * e * stab * (mv.a ? mv.a / 100 : 1) * (A / Dd);
         if (mv.ohko) sc = f.god ? 0 : 40;
         if (mv.rc && f.hp > f.maxhp * 0.4) sc *= 0.6;
+        if (mv.sb) for (const k in mv.sb) if (mv.sb[k] < 0 && m.boosts[k] <= -2) sc *= 0.35;   // e.g. stop spamming Draco Meteor at -2 SpA
         if (mv.sd) sc = f.hp / f.maxhp < 0.25 ? sc : 0;
         if (mv.pr > 0 && f.hp / f.maxhp < 0.2) sc *= 1.6;
         if (f.god && !m.god) sc *= 0.01;
@@ -491,7 +493,7 @@ class Battle {
       if (m.status === 'psn') this.indirect(m, m.maxhp / 8, T('psn'));
       if (m.status === 'tox') { this.indirect(m, m.maxhp * m.toxN / 16, T('tox')); m.toxN = Math.min(15, m.toxN + 1); }
       if (m.vol.leechseed && !f.fainted) { const d = this.indirect(m, m.maxhp / 8, ''); this.heal(f, d); }
-      if (this.weather === 'sandstorm' && !m.types.some(t => ['Rock', 'Ground', 'Steel'].includes(t))) this.indirect(m, m.maxhp / 16, '');
+      if (this.weather === 'sandstorm' && !m.types.some(t => ['Rock', 'Ground', 'Steel'].includes(t)) && (m.sandTick = (m.sandTick || 0) + 1) % 2 === 0) this.indirect(m, m.maxhp / 16, '');   // every 3s
       if (m.status === 'frz' && Math.random() < 0.25) { m.status = null; this.float(m, '❄ ✓', '#9de'); }
       if (m.hasAbility('speedboost')) this.boost(m, {spe: 1});
       if (m.hasAbility('dryskin') && this.weather === 'raindance') this.heal(m, m.maxhp / 8);
@@ -834,6 +836,7 @@ class Battle {
   heal(m, amt) { if (m.fainted) return; const h = Math.min(m.maxhp - m.hp, Math.floor(amt)); if (h > 0) { m.hp += h; this.float(m, '+' + h, '#6f6'); } }
   indirect(m, amt, label, recoil) {
     if (m.fainted || m.god) return 0; if (m.hasAbility('magicguard')) return 0;
+    if (m.sp.fm === 'Eternamax') amt *= 0.25;   // bosses shrug off most %-based chip damage (weather, poison, burn, recoil-free chip)
     if (this.reversalT > 0 && m.side === 0) { this.heal(m, amt); return 0; }
     const d = Math.max(1, Math.floor(amt)); m.hp = Math.max(0, m.hp - d); this.float(m, '-' + d + (label ? ' ' + label : ''), '#f99');
     if (m.hp <= 0) this.faint(m); return d;
@@ -1442,7 +1445,7 @@ function drawHUD(b) {
     });
   }
   // timer
-  ctx.fillStyle = '#0a1633'; rr(600, 14, 80, 46, 8); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = 'bold 30px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(Math.max(0, Math.ceil(b.limit - b.time)), 640, 48);
+  ctx.fillStyle = '#0a1633'; rr(600, 14, 80, 46, 8); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = 'bold 30px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(b.limit === Infinity ? 'BOSS' : Math.max(0, Math.ceil(b.limit - b.time)), 640, 48);
   // center controls
   const me = b.act(0), s0 = b.sides[0];
   const gimmicks = [['mega', '#ff8ae0', !!(me.set.mega || me.sp.megas) && !me.sp.mega], ['z', '#ffe066', true], ['tera', '#7ef0ff', !!me.set.tera || true], ['dmax', '#ff3355', true]];
@@ -1501,6 +1504,7 @@ function defaultMoves(sp) {
   for (const m of dmg) { if (out.length >= 4) break; if (!out.includes(m)) out.push(m); }
   const god = {arceus: 'judgment', dialga: 'roaroftime', palkia: 'spacialrend', giratina: 'shadowforce'}[sp.base];
   if (god && !out.some(m => m.id === god)) { out.unshift(MV[MVI[god]]); out.length = Math.min(out.length, 4); }
+  if (sp.fm === 'Eternamax') return ['dynamaxcannon', 'eternabeam', 'sludgebomb', 'flamethrower'].filter(id => MVI[id] !== undefined);
   if (!out.length) out.push(MV[MVI.tackle]);
   return out.slice(0, 4).map(m => m.id);
 }
