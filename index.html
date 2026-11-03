@@ -824,7 +824,8 @@ class Battle {
     let god0 = false;
     if (f.god && !m.god) god0 = true;
     if (f.god === 'arceus' && m.god === 'trio') dmg = Math.max(1, Math.floor(dmg * 0.25));
-    if (f.god === 'trio' && m.god === 'trio') dmg = Math.min(dmg, Math.floor(f.maxhp * 0.45));   // trio can't one-shot each other (2 hits per use, each capped at 45%)
+    if (f.god === 'trio' && m.god === 'trio') dmg = Math.min(dmg, Math.floor(f.maxhp * 0.45));
+    if (mv.id === 'judgment' && m.god === 'arceus') dmg = Math.max(dmg, f.hp);   // Arceus's Judgment always one-shots, gods and bosses included   // trio can't one-shot each other (2 hits per use, each capped at 45%)
     if (mv.ohko && f.god) god0 = true;
     return {dmg, e, crit, god0};
   }
