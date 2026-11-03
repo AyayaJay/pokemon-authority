@@ -393,7 +393,13 @@ class Battle {
     if (type === 'Grass' && a === 'sapsipper') return a;
     return null;
   }
+  legendType(m) {
+    const f = this.foe(m); let best = m.sp.t[0], bv = -1;
+    for (const t of TYPES) { if (t === 'Stellar') continue; const v = eff(t, f.teraTypes) * (this.immuneByAbility(f, t) ? 0 : 1); if (v > bv) { bv = v; best = t; } }
+    return best;
+  }
   moveType(m, mv) {
+    if (mv.id === 'judgment' && m.sp.base === 'arceus') return this.legendType(m);
     if (mv.id === 'judgment' || mv.id === 'multiattack') return m.sp.t[0];
     if (mv.id === 'terablast' && m.tera) return m.tera;
     return mv.t;
@@ -520,6 +526,7 @@ class Battle {
     if (m.dmaxT > 0) max = true;
     if (max && mv.c === 'X') { m.protectT = 1.2; this.float(m, 'Max Guard', '#bdf'); m.cd = this.actionDelay(m); return; }
     const type = this.moveType(m, mv);
+    if (mv.id === 'judgment' && m.sp.base === 'arceus' && !m.tera && m.types[0] !== type) { m.types = [type]; this.float(m, (LANG === 'ko' ? '레전드플레이트 → ' : 'Legend Plate → ') + tyName(type), TYPE_COLOR[type]); }
     const label = z ? ZNAME[type] : max ? MAXNAME[type] : mvName(mv);
     this.texts.push({x: m.x, y: m.y - m.renderSize * 0.75 - 14, text: label, color: '#fff', t: 0, life: 0.9, tag: true, bg: TYPE_COLOR[type]});
     m.animT = 0; m.atkAnimT = 0.45;
