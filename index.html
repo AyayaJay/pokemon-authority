@@ -72,6 +72,7 @@ function eff(atkType, defTypes) {
   for (const t of defTypes) { const d = D.types[t] && D.types[t].dmg[atkType]; if (d === 1) m *= 2; else if (d === 2) m *= 0.5; else if (d === 3) m *= 0; }
   return m;
 }
+const NATURES = {Hardy:[0,0,'노력'],Lonely:['atk','def','외로움'],Brave:['atk','spe','용감'],Adamant:['atk','spa','고집'],Naughty:['atk','spd','개구쟁이'],Bold:['def','atk','대담'],Docile:[0,0,'온순'],Relaxed:['def','spe','무사태평'],Impish:['def','spa','장난꾸러기'],Lax:['def','spd','촐랑'],Timid:['spe','atk','겁쟁이'],Hasty:['spe','def','성급'],Serious:[0,0,'성실'],Jolly:['spe','spa','명랑'],Naive:['spe','spd','천진난만'],Modest:['spa','atk','조심'],Mild:['spa','def','의젓'],Quiet:['spa','spe','냉정'],Bashful:[0,0,'수줍음'],Rash:['spa','spd','덜렁'],Calm:['spd','atk','차분'],Gentle:['spd','def','얌전'],Sassy:['spd','spe','건방'],Careful:['spd','spa','신중'],Quirky:[0,0,'변덕']};
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const rnd = (a, b) => a + Math.random() * (b - a);
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -180,6 +181,7 @@ class Mon {
     const newMax = Math.floor((2 * b[0] + iv[0] + ev[0] / 4) * L / 100) + L + 10;
     if (init) this.maxhp = newMax * (sp.fm === 'Eternamax' ? 3 : 1);   // Eternamax: boss HP (x3)
     this.stats = {atk: st(b[1], 1), def: st(b[2], 2), spa: st(b[3], 3), spd: st(b[4], 4), spe: st(b[5], 5)};
+    const nat = NATURES[this.set.nature]; if (nat && nat[0]) { this.stats[nat[0]] = Math.floor(this.stats[nat[0]] * 1.1); this.stats[nat[1]] = Math.floor(this.stats[nat[1]] * 0.9); }
     this.size = sp.fm === 'Eternamax' ? ARENA.w / 2 : sizeFor(sp.h); this.god = godKind(sp);   // Eternamax: about half the field
     if (!init) this.ability = toID(sp.ab[0]);
     this.sprite = getSprite(sp.id, this.set.shiny);
@@ -1458,15 +1460,20 @@ function defaultMoves(sp) {
   if (!out.length) out.push(MV[MVI.tackle]);
   return out.slice(0, 4).map(m => m.id);
 }
-function isLegend(sp) { return !!(sp.leg || (SP[sp.base] && SP[sp.base].leg)); }
-function rollIVs(sp) { return isLegend(sp) ? [31, 31, 31, 31, 31, 31] : [0, 0, 0, 0, 0, 0].map(() => Math.floor(Math.random() * 32)); }
-function baseEVs(sp) { return isLegend(sp) ? [255, 255, 255, 255, 255, 255] : [0, 0, 0, 0, 0, 0]; }
-function newSet(id, shiny) { const sp = SP[id]; return {id, shiny: !!shiny, ability: sp.ab[0], tera: sp.t[0], mega: sp.megas ? sp.megas[0] : null, gmax: !!sp.gmaxs, moves: defaultMoves(sp), ivs: rollIVs(sp), evs: baseEVs(sp)}; }
+const GOD_BASES = ['arceus', 'dialga', 'palkia', 'giratina'];
+function isGod(sp) { return GOD_BASES.includes(sp.base); }
+function rollIVs(sp) { return isGod(sp) ? [31, 31, 31, 31, 31, 31] : [0, 0, 0, 0, 0, 0].map(() => Math.floor(Math.random() * 32)); }
+function baseEVs(sp) { return isGod(sp) ? [252, 252, 252, 252, 252, 252] : [0, 0, 0, 0, 0, 0]; }
+function rollNature() { const n = Object.keys(NATURES); return n[Math.floor(Math.random() * n.length)]; }
+function newSet(id, shiny) { const sp = SP[id]; return {id, shiny: !!shiny, ability: sp.ab[0], tera: sp.t[0], mega: sp.megas ? sp.megas[0] : null, gmax: !!sp.gmaxs, moves: defaultMoves(sp), ivs: rollIVs(sp), evs: baseEVs(sp), nature: rollNature()}; }
 function randomSet() { const s = PICKABLE[Math.floor(Math.random() * PICKABLE.length)]; return newSet(s.id, Math.random() < 0.05); }
 function loadSave() {
   try { SAVE = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { SAVE = null; }
   if (!SAVE || !SAVE.teams) SAVE = {v: 1, lang: 'en', teams: [[newSet('charizard'), newSet('gyarados'), newSet('garchomp')], [randomSet(), randomSet(), randomSet()]], settings: {swapCD: 20, level: 50, auth: {time: true, space: true, anti: true}, antiMode: 'reversal'}, record: {win: 0, lose: 0, draw: 0}};
-  for (const t of SAVE.teams) for (const s of t) { const sp = SP[s.id]; if (!sp) continue; if (!s.ivs) s.ivs = rollIVs(sp); if (!s.evs) s.evs = baseEVs(sp); }
+  for (const t of SAVE.teams) for (const s of t) { const sp = SP[s.id]; if (!sp) continue; if (!s.nature) s.nature = rollNature();
+    const wasLegendMax = s.ivs && s.ivs.every(v => v === 31) && s.evs && s.evs.every(v => v === 255);
+    if (!s.ivs || (wasLegendMax && !isGod(sp)) || isGod(sp)) s.ivs = rollIVs(sp);
+    if (!s.evs || wasLegendMax || isGod(sp)) s.evs = baseEVs(sp); }
   LANG = SAVE.lang || 'en';
 }
 function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) {} }
@@ -1528,12 +1535,13 @@ function slotCard(side, i, set) {
   opts.append(el('label', {}, el('input', {type: 'checkbox', checked: set.shiny, on: {change: e => { set.shiny = e.target.checked; save(); img.src = portraitURL(sp, set.shiny); }}}), ' ✨' + tr('Shiny', '이로치')));
   opts.append(el('label', {}, tr('Ability ', '특성 '), el('select', {on: {change: e => { set.ability = e.target.value; save(); }}}, ...sp.ab.map(a => el('option', {value: a, selected: set.ability === a}, abName(a))))));
   opts.append(el('label', {}, tr('Tera ', '테라 '), el('select', {on: {change: e => { set.tera = e.target.value; save(); }}}, ...TYPES.map(t => el('option', {value: t, selected: set.tera === t}, tyName(t))))));
+  opts.append(el('label', {}, tr('Nature ', '성격 '), el('select', {on: {change: e => { set.nature = e.target.value; save(); }}}, ...Object.keys(NATURES).map(n => { const v = NATURES[n]; const SN = {atk: tr('Atk', '공격'), def: tr('Def', '방어'), spa: tr('SpA', '특공'), spd: tr('SpD', '특방'), spe: tr('Spe', '스피드')}; return el('option', {value: n, selected: set.nature === n}, (LANG === 'ko' ? v[2] : n) + (v[0] ? ` (+${SN[v[0]]} −${SN[v[1]]})` : '')); }))));
   if (sp.megas) opts.append(el('label', {}, tr('Mega ', '메가 '), el('select', {on: {change: e => { set.mega = e.target.value; save(); }}}, ...sp.megas.map(m => el('option', {value: m, selected: set.mega === m}, spName(SP[m]))))));
   if (sp.gmaxs) opts.append(el('label', {}, el('input', {type: 'checkbox', checked: set.gmax, on: {change: e => { set.gmax = e.target.checked; save(); }}}), ' Gigantamax'));
   c.append(opts);
   const SN = LANG === 'ko' ? ['HP', '공격', '방어', '특공', '특방', '스피드'] : ['HP', 'Atk', 'Def', 'SpA', 'SpD', 'Spe'];
-  const leg = isLegend(sp);
-  const det = el('details', {className: 'statbox'}, el('summary', {}, `IV ${set.ivs.join('/')}  ·  EV ${set.evs.join('/')}` + (leg ? (LANG === 'ko' ? '  (전설: 최대)' : '  (legendary: max)') : '')));
+  const leg = isGod(sp);
+  const det = el('details', {className: 'statbox'}, el('summary', {}, `IV ${set.ivs.join('/')}  ·  EV ${set.evs.join('/')}` + (leg ? (LANG === 'ko' ? '  (신: 최대)' : '  (god: max)') : '')));
   const grid = el('div', {className: 'statgrid'});
   grid.append(el('span'), ...SN.map(n => el('b', {}, n)));
   grid.append(el('b', {}, 'IV'), ...set.ivs.map((v, i) => el('input', {type: 'number', min: 0, max: 31, value: v, disabled: leg, on: {change: ev => { set.ivs[i] = clamp(+ev.target.value || 0, 0, 31); save(); }}})));
