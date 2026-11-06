@@ -5,6 +5,12 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 6, 2026 — build 1105-2358
+
+- **Dodge = 0.5 s of invincibility** (was 0.32 s). Nothing that hits you during it does damage: moves, held beams, area blasts, and now also map eruptions / lightning. Damage that was already on you (burn, poison, Leech Seed) still ticks. Your Pokémon gets a flashing blue outline while it's untouchable. Perfect-dodge window slightly wider (0.18 s).
+
+---
+
 ## Nov 5, 2026 (night) — builds 1105-2224 to 1105-2353
 
 ### Controls
