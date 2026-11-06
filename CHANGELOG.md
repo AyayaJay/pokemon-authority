@@ -5,6 +5,19 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 6, 2026 — build 1106-0009
+
+- **Difficulty setting: Easy / Normal / Hard** (Settings, or OPTIONS in Adventure). Default is **Normal**, which is easier than the old enemy AI. Only enemies are affected; your partners and Auto play at full skill.
+
+| | Easy | Normal (default) | Hard (old AI) |
+|---|---|---|---|
+| Time between enemy attacks | ~2.5 s | ~1.95 s | 1.4 s |
+| Enemy aim | sloppy, no leading | slightly off | aims ahead of you |
+| Enemy dodging | 30% as often | 60% | 100% |
+| Focuses your weakest Pokémon (2v2/3v3) | no | yes | yes |
+| Enemy damage | ×0.8 | ×0.92 | ×1.05 |
+| Trainer Road enemy EVs per trainer | +5 | +9 | +12 |
+
 ## Nov 6, 2026 — build 1105-2358
 
 - **Dodge = 0.5 s of invincibility** (was 0.32 s). Nothing that hits you during it does damage: moves, held beams, area blasts, and now also map eruptions / lightning. Damage that was already on you (burn, poison, Leech Seed) still ticks. Your Pokémon gets a flashing blue outline while it's untouchable. Perfect-dodge window slightly wider (0.18 s).
