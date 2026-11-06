@@ -5,6 +5,12 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 6, 2026 — build 1106-1003
+- **Phone: switching moved to the top-left** so your left thumb (joystick) no longer covers the party portraits. Portraits are bigger and easier to tap.
+- **Phone: bigger buttons** (moves, dodge, bag, items, special, ball, authorities, auto, speed).
+- **Phone: no bottom bar** — the field now goes all the way to the bottom of the screen.
+- The party row can be moved in the button layout editor too. Phone layouts saved before this build reset once because the button sizes changed.
+
 ## Nov 6, 2026 — build 1106-1000
 - **Evolution scene** in Trainer Road: "What? X is evolving!" with the classic white flicker, then "Congratulations!". Click or any key skips.
 - **Your moves stay**: if you picked a Pokémon's moves yourself, evolving no longer replaces them.
