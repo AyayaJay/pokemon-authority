@@ -5,6 +5,10 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 6, 2026 — build 1106-0028
+
+- **Fixed (phones):** choosing TITLE in Adventure re-opened Adventure right away, because the same tap also pressed the Adventure button on the home screen. The same could happen when leaving a battle. Taps now don't carry over to the menu underneath.
+
 ## Nov 6, 2026 — build 1106-0017
 
 - **Close-range hits knock back and stagger:** landing a close-range move shoves the target back (farther for stronger moves and when you're bigger than it) and staggers it for a moment. This **cancels a held beam** (Flamethrower, Water Gun…) or an attack it was about to throw ("Interrupted!"). Gods and Dynamaxed Pokémon aren't pushed or staggered.
