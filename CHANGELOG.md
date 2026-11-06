@@ -5,6 +5,13 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 6, 2026 — build 1106-1000
+- **Evolution scene** in Trainer Road: "What? X is evolving!" with the classic white flicker, then "Congratulations!". Click or any key skips.
+- **Your moves stay**: if you picked a Pokémon's moves yourself, evolving no longer replaces them.
+- **Beam clash is clearer**: a "BEAM CLASH!" panel with a tug-of-war bar (you vs enemy) and plain instructions: press Q W E R or Space fast (phone: tap the screen fast). Easier difficulties push weaker.
+- **Reroll in Trainer Road**: "Other starters" button on the starter screen, and 2 rerolls on every new-Pokémon pick.
+- **More type variety**: new-Pokémon choices now favor types your team doesn't have yet, and the three choices don't share types.
+
 ## Nov 6, 2026 — build 1106-0943
 
 - **Fixed: Trainer Road battles wouldn't start** (builds 1106-0009 to 1106-0028). The difficulty update accidentally left every trainer with 0 Pokémon. Trainers have their full teams again.
