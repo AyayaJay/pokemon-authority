@@ -5,6 +5,10 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 6, 2026 — build 1106-0017
+
+- **Close-range hits knock back and stagger:** landing a close-range move shoves the target back (farther for stronger moves and when you're bigger than it) and staggers it for a moment. This **cancels a held beam** (Flamethrower, Water Gun…) or an attack it was about to throw ("Interrupted!"). Gods and Dynamaxed Pokémon aren't pushed or staggered.
+
 ## Nov 6, 2026 — build 1106-0014
 
 - **Close-range moves (Scratch, Tackle, Slash, punches, bites…) hit a cone in front of you** instead of only the touched target: reach ≈ body + 150 (a bit more for big Pokémon), 110° wide. Every enemy inside the cone is hit (several at once in 2v2/3v3). A white-and-type-coloured slash shows the swing.
