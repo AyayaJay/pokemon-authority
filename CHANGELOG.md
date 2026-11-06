@@ -5,6 +5,9 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 6, 2026 — build 1106-1004
+- **No duplicate moves**: in the move picker, a move already chosen in another slot is greyed out. Old teams that had the same move twice are cleaned up automatically.
+
 ## Nov 6, 2026 — build 1106-1003
 - **Phone: switching moved to the top-left** so your left thumb (joystick) no longer covers the party portraits. Portraits are bigger and easier to tap.
 - **Phone: bigger buttons** (moves, dodge, bag, items, special, ball, authorities, auto, speed).
