@@ -5,6 +5,10 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 6, 2026 — build 1106-1400
+- **Adventure is now "🧪 Test mode"** on the website (it's an early test of walking around and catching). It's no longer in the Android / Windows apps.
+- Apps: the game now comes inside the app (APK about 3.5 MB), so the first launch works without internet. The game inside the apps still updates itself from the website when online.
+
 ## Nov 6, 2026 — build 1106-1315
 - **How to play guide**: 10 short pages covering everything (moving, dodging, beam clash, authorities, Trainer Road, Adventure, settings, offline). Opens by itself the first time; open it again from ⚙ Settings → ❓ How to play, or Pause → ❓ How to play in a battle. PC players see their own key bindings.
 - **Apps (first version)**: an Android app (APK) and a Windows app, on the GitHub Releases page.
