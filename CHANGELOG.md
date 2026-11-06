@@ -5,6 +5,11 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 6, 2026 — build 1106-0014
+
+- **Close-range moves (Scratch, Tackle, Slash, punches, bites…) hit a cone in front of you** instead of only the touched target: reach ≈ body + 150 (a bit more for big Pokémon), 110° wide. Every enemy inside the cone is hit (several at once in 2v2/3v3). A white-and-type-coloured slash shows the swing.
+- **Clearer attack markers:** thicker outlines that stay the same thickness at any zoom, brighter fill, white inner edge. Yours are cyan, enemy ones red. The melee cone fills outward so you can see it coming. Area circles are now true circles that match the real hit area.
+
 ## Nov 6, 2026 — build 1106-0009
 
 - **Difficulty setting: Easy / Normal / Hard** (Settings, or OPTIONS in Adventure). Default is **Normal**, which is easier than the old enemy AI. Only enemies are affected; your partners and Auto play at full skill.
