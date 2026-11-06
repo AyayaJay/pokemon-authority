@@ -1,0 +1,14 @@
+{
+  "name": "Pokémon Authority",
+  "short_name": "PKMN Authority",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#151726",
+  "theme_color": "#151726",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"}
+  ]
+}

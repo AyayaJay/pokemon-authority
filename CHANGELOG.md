@@ -5,6 +5,14 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 6, 2026 — build 1106-1235
+- **Sprite loading fixed**: GitHub sometimes refuses sprite downloads when too many come at once, which left Pokémon (and the boss preview) blank. Now the game downloads at most 6 files at a time, never downloads the same file twice, and retries refused downloads. A sprite that still fails keeps retrying in the background during the battle.
+- The big red "Sprites can't load here" box is gone. If a sprite is still missing, a small "Loading sprites again…" note shows at the top instead.
+- Portraits (menus, boss preview) retry once, then fall back to the base form (e.g. Eternamax → Eternatus).
+- **Screen rotation**: "🔄 Rotate screen" in the pause menu, and a "Screen rotation" setting (Auto / Normal / Turn right / Turn left / Upside down). Touch controls follow the rotation.
+- **Full screen popup**: the game now enters full screen once per visit instead of every battle. New setting "Full screen (phone)" can turn it off.
+- **Install as an app**: Chrome ⋮ → Add to Home screen / Install app opens the game full screen with no browser bar and no popup.
+
 ## Nov 6, 2026 — build 1106-1034
 - **Longer melee reach**: melee moves (Scratch, Tackle, punches…) reach about 100 farther, a bit more for big Pokémon. The cone angle is unchanged.
 - **Evolution scene waits for the pictures** (max 3 s) so it never starts with an empty box.
