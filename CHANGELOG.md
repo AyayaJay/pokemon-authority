@@ -6,7 +6,7 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 ---
 
 ## Nov 6, 2026 — build 1106-1400
-- **Adventure is now "🧪 Test mode"** on the website (it's an early test of walking around and catching). It's no longer in the Android / Windows apps.
+- **Adventure is now called "🧪 Test mode"** (it's an early test of walking around and catching). Available on the website and in the apps.
 - Apps: the game now comes inside the app (APK about 3.5 MB), so the first launch works without internet. The game inside the apps still updates itself from the website when online.
 
 ## Nov 6, 2026 — build 1106-1315

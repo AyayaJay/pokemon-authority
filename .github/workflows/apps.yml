@@ -18,8 +18,7 @@ jobs:
       - name: Put the game inside the app
         run: |
           D=app/android/app/src/main/assets/site; mkdir -p $D/world
-          cp -r index.html pranims.json manifest.json icon-192.png icon-512.png fx fonts $D/
-          cp -r world/learn.json world/obj world/pb.png $D/world/   # test mode maps are website-only
+          cp -r index.html pranims.json manifest.json icon-192.png icon-512.png fx fonts world $D/
       - name: Build APK
         env:
           KEYSTORE_FILE: ${{ github.workspace }}/app/android/keystore/release.keystore
@@ -42,8 +41,7 @@ jobs:
         shell: bash
         run: |
           D=app/pc/site; mkdir -p $D/world
-          cp -r index.html pranims.json manifest.json icon-192.png icon-512.png fx fonts $D/
-          cp -r world/learn.json world/obj world/pb.png $D/world/   # test mode maps are website-only
+          cp -r index.html pranims.json manifest.json icon-192.png icon-512.png fx fonts world $D/
       - name: Build Windows app
         working-directory: app/pc
         run: |
