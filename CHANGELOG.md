@@ -5,6 +5,12 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 6, 2026 — build 1106-1008
+- **Pokémon search filters**: type, generation, group (fully evolved / can still evolve / legendary & mythical), and sort by dex #, total stats, Attack, Sp. Atk, Speed or size. Shows how many match.
+- **Move filters** (🔍 Filter moves, on each Pokémon): Physical / Special / Status, type, range (melee / beam / projectile / area), effect (raises my stats / lowers foe stats / burn-poison-sleep / heals / protect), and sort by name, power or accuracy. Each Pokémon keeps its own filters.
+- Move lists now show category and range: e.g. "Flamethrower — Fire · Spec · 90 · Beam".
+- **Joystick option (phone)** in Settings: Floating (appears where you touch, like before) or Fixed (always in the bottom-left). Works in battles and Adventure.
+
 ## Nov 6, 2026 — build 1106-1004
 - **No duplicate moves**: in the move picker, a move already chosen in another slot is greyed out. Old teams that had the same move twice are cleaned up automatically.
 
