@@ -5,6 +5,10 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 6, 2026 — build 1106-1034
+- **Longer melee reach**: melee moves (Scratch, Tackle, punches…) reach about 100 farther, a bit more for big Pokémon. The cone angle is unchanged.
+- **Evolution scene waits for the pictures** (max 3 s) so it never starts with an empty box.
+
 ## Nov 6, 2026 — build 1106-1008
 - **Pokémon search filters**: type, generation, group (fully evolved / can still evolve / legendary & mythical), and sort by dex #, total stats, Attack, Sp. Atk, Speed or size. Shows how many match.
 - **Move filters** (🔍 Filter moves, on each Pokémon): Physical / Special / Status, type, range (melee / beam / projectile / area), effect (raises my stats / lowers foe stats / burn-poison-sleep / heals / protect), and sort by name, power or accuracy. Each Pokémon keeps its own filters.
