@@ -5,6 +5,10 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 6, 2026 — build 1106-0943
+
+- **Fixed: Trainer Road battles wouldn't start** (builds 1106-0009 to 1106-0028). The difficulty update accidentally left every trainer with 0 Pokémon. Trainers have their full teams again.
+
 ## Nov 6, 2026 — build 1106-0028
 
 - **Fixed (phones):** choosing TITLE in Adventure re-opened Adventure right away, because the same tap also pressed the Adventure button on the home screen. The same could happen when leaving a battle. Taps now don't carry over to the menu underneath.
