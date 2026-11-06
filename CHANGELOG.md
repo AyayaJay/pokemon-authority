@@ -5,6 +5,11 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 6, 2026 — build 1106-1248
+- **Offline play**: every sprite, sound and game file you load is now saved on your device, so anything you've seen once works without internet. The game page itself also opens offline.
+- **Download everything**: Settings → Offline play → "⬇ Download everything" saves every Pokémon sprite, portrait, move animation, sound and music track (about 300 MB, use Wi-Fi). You can stop and resume; files already saved are skipped. "Delete saved data" frees the space.
+- **Settings everywhere**: a ⚙ button in the top-right corner of every menu screen (home, Trainer Road, team editor…), and "ALL SETTINGS…" in the Adventure options menu. No need to start a battle to change something.
+
 ## Nov 6, 2026 — build 1106-1235
 - **Sprite loading fixed**: GitHub sometimes refuses sprite downloads when too many come at once, which left Pokémon (and the boss preview) blank. Now the game downloads at most 6 files at a time, never downloads the same file twice, and retries refused downloads. A sprite that still fails keeps retrying in the background during the battle.
 - The big red "Sprites can't load here" box is gone. If a sprite is still missing, a small "Loading sprites again…" note shows at the top instead.
