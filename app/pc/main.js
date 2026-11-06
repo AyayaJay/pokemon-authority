@@ -51,13 +51,15 @@ async function handle(req) {
   // the game website: newest from the internet, saved copy when offline
   if (u.host === SITE_HOST) {
     let p = (u.pathname.startsWith(SITE_BASE) ? u.pathname.slice(SITE_BASE.length) : u.pathname.slice(1)) || 'index.html'; if (p.endsWith('/')) p += 'index.html';
-    const lp = path.join(SITE, ...decodeURIComponent(p).split('/').filter(x => x && x !== '..'));
+    const parts = decodeURIComponent(p).split('/').filter(x => x && x !== '..');
+    const lp = path.join(SITE, ...parts), bp = path.join(__dirname, 'site', ...parts);   // bp: the copy that came with the app
     try {
-      const r = await net.fetch(url, {bypassCustomProtocolHandlers: true, cache: 'no-cache'});
+      const r = await net.fetch(url, {bypassCustomProtocolHandlers: true, cache: 'no-cache', signal: AbortSignal.timeout(6000)});
       if (r.ok) { const buf = Buffer.from(await r.arrayBuffer()); try { fs.mkdirSync(path.dirname(lp), {recursive: true}); fs.writeFileSync(lp, buf); } catch (e) {} return new Response(buf, {status: 200, headers: {'content-type': r.headers.get('content-type') || mimeOf(lp)}}); }
       if (fs.existsSync(lp)) return fileResp(lp);
+      if (fs.existsSync(bp)) return fileResp(bp);
       return r;
-    } catch (e) { if (fs.existsSync(lp)) return fileResp(lp); return new Response('Offline and this page was never saved.', {status: 503}); }
+    } catch (e) { if (fs.existsSync(lp)) return fileResp(lp); if (fs.existsSync(bp)) return fileResp(bp); return new Response('Offline and this page was never saved.', {status: 503}); }
   }
   // sprites / sounds / music: local file first, then download (and save)
   const lp = ASSET_HOSTS.has(u.hostname) ? localPath(url) : null;

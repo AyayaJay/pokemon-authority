@@ -171,7 +171,7 @@ public class MainActivity extends Activity {
     /** etagFile: if given, ask the server "has it changed?" and only download when it has (status 304 = not changed). */
     static byte[] download(String url, int[] status, File etagFile) throws Exception {
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
-        c.setConnectTimeout(8000); c.setReadTimeout(30000); c.setInstanceFollowRedirects(true);
+        c.setConnectTimeout(etagFile != null || url.contains(SITE_HOST) ? 4000 : 8000); c.setReadTimeout(30000); c.setInstanceFollowRedirects(true);
         c.setRequestProperty("User-Agent", "PokemonAuthorityApp");
         c.setUseCaches(false);
         if (etagFile != null && etagFile.exists()) {
@@ -218,6 +218,7 @@ public class MainActivity extends Activity {
                     if (d != null) { writeFile(lf, d); return resp(mime(p), new ByteArrayInputStream(d), 200, "OK"); }
                 } catch (Exception e) { }
                 try { if (lf.exists()) return resp(mime(p), new FileInputStream(lf), 200, "OK"); } catch (Exception e) { }
+                try { return resp(mime(p), getAssets().open("site/" + p), 200, "OK"); } catch (Exception e) { }   // copy that came inside the APK
                 return st[0] != 0 ? resp("text/plain", new ByteArrayInputStream(new byte[0]), st[0], "Error") : null;
             }
             // sprites / sounds / music: the file in the folder first, otherwise download (and save)

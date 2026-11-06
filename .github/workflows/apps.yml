@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['app/**', '.github/workflows/apps.yml']
+    paths: ['app/**', '.github/workflows/apps.yml']   # the game itself updates inside the apps on its own; rebuild the apps only when they change
 permissions:
   contents: write
 jobs:
@@ -15,6 +15,10 @@ jobs:
         with: {distribution: temurin, java-version: '17'}
       - uses: gradle/actions/setup-gradle@v4
         with: {gradle-version: '8.11.1'}
+      - name: Put the game inside the app
+        run: |
+          mkdir -p app/android/app/src/main/assets/site
+          cp -r index.html pranims.json manifest.json icon-192.png icon-512.png fx world fonts app/android/app/src/main/assets/site/
       - name: Build APK
         env:
           KEYSTORE_FILE: ${{ github.workspace }}/app/android/keystore/release.keystore
@@ -33,6 +37,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '20'}
+      - name: Put the game inside the app
+        shell: bash
+        run: |
+          mkdir -p app/pc/site
+          cp -r index.html pranims.json manifest.json icon-192.png icon-512.png fx world fonts app/pc/site/
       - name: Build Windows app
         working-directory: app/pc
         run: |

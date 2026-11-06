@@ -5,3 +5,5 @@ app/android/.gradle/
 app/android/build/
 app/android/app/build/
 
+app/android/app/src/main/assets/
+app/pc/site/
