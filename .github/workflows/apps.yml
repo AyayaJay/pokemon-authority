@@ -1,0 +1,61 @@
+name: Build apps
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['app/**', '.github/workflows/apps.yml']
+permissions:
+  contents: write
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.11.1'}
+      - name: Build APK
+        env:
+          KEYSTORE_FILE: ${{ github.workspace }}/app/android/keystore/release.keystore
+          KEYSTORE_PASSWORD: 'pwABEdnDFZXCbR6keXV_7R5_'
+          KEY_PASSWORD: 'pwABEdnDFZXCbR6keXV_7R5_'
+          KEY_ALIAS: pa
+          APP_VERSION_CODE: ${{ github.run_number }}
+          APP_VERSION_NAME: 1.0.${{ github.run_number }}
+        run: gradle -p app/android assembleRelease --no-daemon --stacktrace
+      - run: cp app/android/app/build/outputs/apk/release/app-release.apk PokemonAuthority.apk
+      - uses: actions/upload-artifact@v4
+        with: {name: android, path: PokemonAuthority.apk}
+  pc:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - name: Build Windows app
+        working-directory: app/pc
+        run: |
+          npm install --no-audit --no-fund
+          npx @electron/packager . PokemonAuthority --platform=win32 --arch=x64 --out=out --overwrite --asar --icon=icon.ico --app-version=1.0.${{ github.run_number }} --ignore="^/out" --ignore="^/game-files"
+          Compress-Archive -Path out/PokemonAuthority-win32-x64/* -DestinationPath ../../PokemonAuthority-Windows.zip
+      - uses: actions/upload-artifact@v4
+        with: {name: pc, path: PokemonAuthority-Windows.zip}
+  release:
+    needs: [android, pc]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: {merge-multiple: true}
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: app-v1.0.${{ github.run_number }}
+          name: Pokémon Authority app 1.0.${{ github.run_number }}
+          make_latest: true
+          body: |
+            **Android:** download PokemonAuthority.apk on your phone and open it (allow "install unknown apps" for your browser if asked).
+            **Windows:** download PokemonAuthority-Windows.zip, unzip it to any folder, run PokemonAuthority.exe.
+            The game itself updates automatically (it loads the newest version when online). Downloaded sprites/music go to the game-files folder (PC: next to the .exe; Android: Android/data/io.github.ayayajay.pokemonauthority/files).
+          files: |
+            PokemonAuthority.apk
+            PokemonAuthority-Windows.zip

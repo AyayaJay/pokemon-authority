@@ -5,6 +5,14 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 6, 2026 — build 1106-1315
+- **How to play guide**: 10 short pages covering everything (moving, dodging, beam clash, authorities, Trainer Road, Adventure, settings, offline). Opens by itself the first time; open it again from ⚙ Settings → ❓ How to play, or Pause → ❓ How to play in a battle. PC players see their own key bindings.
+- **Apps (first version)**: an Android app (APK) and a Windows app, on the GitHub Releases page.
+  - Small download. On first launch: play online, or download all files (about 300 MB) to play offline.
+  - Downloaded sprites, sounds and music go into a normal folder (PC: game-files next to the .exe; Android: Android/data/io.github.ayayajay.pokemonauthority/files). Replace a file with one of the same name to use your own sprite or music.
+  - The game itself still updates automatically when online, and opens offline from a saved copy.
+  - Export save writes a real file into the folder's saves/ subfolder.
+
 ## Nov 6, 2026 — build 1106-1248
 - **Offline play**: every sprite, sound and game file you load is now saved on your device, so anything you've seen once works without internet. The game page itself also opens offline.
 - **Download everything**: Settings → Offline play → "⬇ Download everything" saves every Pokémon sprite, portrait, move animation, sound and music track (about 300 MB, use Wi-Fi). You can stop and resume; files already saved are skipped. "Delete saved data" frees the space.

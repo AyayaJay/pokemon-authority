@@ -1,0 +1,7 @@
+app/pc/node_modules/
+app/pc/game-files/
+app/pc/out/
+app/android/.gradle/
+app/android/build/
+app/android/app/build/
+
