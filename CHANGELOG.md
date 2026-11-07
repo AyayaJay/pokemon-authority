@@ -5,6 +5,9 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 7, 2026 — build 1107-0130
+- Story: wild monsters now appear in the ash-covered grass of the Ashen Fields (it wasn't counted as tall grass before).
+
 ## Nov 7, 2026 — build 1107-0127
 - **Story: the gods' battle looks much better.** The sky darkens and dust falls; the sky tears open showing the starry void between worlds (glowing pink edges); Dialga and Palkia burst out with colored auras; Roar of Time and Spacial Rend collide with the real Spacial Rend vortex at the impact point; Giratina rises from a second, dark rift; a pink shockwave ends in white. Earthquake / Spacial Rend / Shadow Force sound effects.
 - Story: the kid no longer knows the gods' names at first — they're "the blue one", "the pale one" and "the shadow" until the Elder names them from the old songs.
