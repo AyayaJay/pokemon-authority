@@ -78,7 +78,7 @@ def save(m, extra):
     used = {}
     for code in set(behs):
         nm = M.beh_names.get(code, '')
-        if any(k in nm for k in ('TALL_GRASS', 'LONG_GRASS', 'WATER', 'DOOR', 'JUMP_', 'COUNTER', 'WARP', 'PC', 'BOOKSHELF', 'POND', 'CAVE')): used[code] = nm
+        if any(k in nm for k in ('TALL_GRASS', 'LONG_GRASS', 'ASHGRASS', 'WATER', 'DOOR', 'JUMP_', 'COUNTER', 'WARP', 'PC', 'BOOKSHELF', 'POND', 'CAVE')): used[code] = nm
     d = {'w': W, 'h': H, 'top': has_top, 'coll': ''.join('1' if c else '0' for c in coll), 'beh': behs, 'behNames': used,
          'npcs': [], 'warps': m.warps, 'signs': m.signs, 'conns': m.conns, 'type': 'MAP_TYPE_TOWN', 'title': m.name, 'wild': None, 'water': None}
     d.update(extra)
