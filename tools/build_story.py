@@ -122,6 +122,7 @@ V.plot(22, 17, 0); V.plot(27, 17, 1); V.plot(22, 21, 1); V.plot(27, 21, 0)
 for (x, y) in [(11, 9), (21, 9), (30, 12), (11, 15), (5, 13), (20, 21)]: V.shrub(x, y)
 for (x, y) in [(9, 13), (14, 12), (24, 13), (16, 16), (10, 22), (30, 15), (5, 22)]: V.put(x, y, mt(0x29F))
 V.put(31, 13, mt(0x003, 1)); V.signs.append({'x': 31, 'y': 13, 'text': 'ASHEN VILLAGE\nThe fire keeps the monsters away.'})
+V.put(10, 21, mt(0x003, 1)); V.signs.append({'x': 10, 'y': 21, 'text': "HEALER'S HUT\nRest your monsters here.", 'ko': '치유사의 오두막\n몬스터들을 이곳에서 쉬게 하세요.'})
 V.put(10, 12, mt(0x003, 1)); V.signs.append({'x': 10, 'y': 12, 'text': "{P}'s home"})
 house_maps = {   # name, room shape, furniture
     'home':  ('AshenVillage_Home',  'SecretBase_Tree1',      [('table', 5, 2), ('stump', 4, 3), ('stump', 8, 3), ('mat', 6, 5), ('plant', 2, 2)]),
@@ -151,7 +152,7 @@ for (x, y) in [(11, 7), (9, 21), (4, 22)]: F.put(x, y, mt(0x29F))
 F.put(12, 12, mt(0x003, 1)); F.signs.append({'x': 12, 'y': 12, 'text': 'EAST FIELDS\nTall grass ahead. Monsters hide there.'})
 F.conns.append({'to': 'S_AshenVillage', 'dir': 'left', 'off': 0})
 n, d = save(F, {'title': 'Ashen Fields', 'type': 'MAP_TYPE_ROUTE', 'music': 'grass',
-                'wild': {'rate': 20, 'mons': [['starly', 2, 4], ['bidoof', 2, 4], ['shinx', 2, 4], ['kricketot', 2, 3], ['budew', 2, 4], ['wurmple', 2, 3], ['buneary', 3, 4], ['zubat', 2, 4], ['burmy', 2, 3], ['pachirisu', 3, 5], ['stunky', 3, 5], ['riolu', 4, 5]]}})
+                'wild': {'rate': 20, 'mons': [['starly', 2, 4], ['bidoof', 2, 4], ['shinx', 2, 4], ['kricketot', 2, 3], ['budew', 2, 4], ['wurmple', 2, 3], ['buneary', 3, 4], ['zubat', 2, 4], ['burmy', 2, 3], ['pachirisu', 3, 5], ['stunky', 3, 5]]}})
 MAPS[n] = d
 
 W0 = json.load(open(os.path.join(OUT, 'world.json')))

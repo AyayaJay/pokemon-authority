@@ -5,6 +5,10 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 7, 2026 — build 1107-0954
+- Story: new Healer's hut in Ashen Village (the bottom-left hut, with a sign out front). Talk to the healer to fully heal your monsters for free.
+- Story: Riolu no longer appears in the wild, and your partner's kind (any of your three babies) never shows up as a wild monster.
+
 ## Nov 7, 2026 — build 1107-0941
 - Story & Test mode: after losing a wild battle you can choose "Try again" (same monster, your team back as it was before the fight) or "Go home and rest".
 - Story & Test mode: new RESTART option in the menu to start over from the very beginning (asks first).
