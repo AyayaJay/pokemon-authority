@@ -5,6 +5,14 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 7, 2026 — build 1107-0106
+- **📖 Story mode (first preview)** — Chapter 1: The Ashen Tribe, set in ancient Sinnoh when Pokémon were just called "monsters".
+  - New game: boy or girl, your name, and the three baby monsters (story default: Riolu, Froakie, Dreepy — or pick your own first-stage, non-legendary three).
+  - Opening: Ashen Village and the East Fields (new GBA-style maps), Dialga and Palkia tearing the sky with Giratina rising from a rift, the gods saving the kid and granting one Authority (you choose; a crimson mark appears on the right arm / left arm / chest), waking up to three baby monsters taking care of you, and one of them joining you (the other two hide in the forest — they'll be back).
+  - Your partner follows you around. The village panics when you return; the Elder explains the mark; the master-hunter gives the first trial (beat 3 wild monsters in the fields).
+  - Story battles use the Authority you chose. Story has its own save, separate from Test mode.
+- Test mode: wild encounter effect (white flashes + black bars), wild battle music, no black flicker when stepping onto a new route, smoother walking / running animation for every character.
+
 ## Nov 6, 2026 — build 1106-2340
 - **Melee effects land with the hit**: each melee move's own animation (teeth for Bite, claws for Scratch, flaming fist for Fire Punch…) now plays at the moment of the hit, on whoever gets hit, about 35% bigger. The old curved slash on top of it is gone.
 - **Melee is long and narrow**: about twice the reach. Cone width depends on the move: bites 30°, punches 36°, most moves 50°, slicing moves 70°. The ground marker shows each move's real shape.
