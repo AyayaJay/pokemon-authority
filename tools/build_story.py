@@ -84,11 +84,25 @@ def save(m, extra):
     d.update(extra)
     return n, d
 
-def interior(name, src_map, door_out):
-    """Reuse an Emerald house interior as-is (rustic enough for now); door leads back outside."""
+def interior(name, src_map, door_out, furn):
+    """A hut from the inside: Emerald's secret-base rooms (woven leaf / dirt / stone walls) with log furniture."""
     L = M.load_layout(src_map)
     m = Map(name, L['W'], L['H'], L['prim'], L['sec'], 0)
     m.b = [v & 0x0FFF for v in L['blocks']]
+    for i, v in enumerate(m.b):
+        if (v & 0x3FF) in (0x220, 0x221, 0x20E, 0x20F) and 0 < i % m.W < m.W - 1 and 0 < i // m.W < m.H - 1 and not (v & 0x3FF) == 0x20F: m.b[i] = 0x20A
+    C = COLL
+    for kind, x, y in furn:
+        if kind == 'table':
+            for i, v in enumerate((0x2A4, 0x2A5, 0x2A6)): m.put(x + i, y, v | C)
+            for i, v in enumerate((0x2B4, 0x2B5, 0x2B6)): m.put(x + i, y + 1, v | C)
+        elif kind == 'stump': m.put(x, y, 0x2C9 | C)
+        elif kind == 'rock': m.put(x, y, 0x2CA | C)
+        elif kind == 'stool': m.put(x, y, 0x2C2 | C)
+        elif kind == 'plant': m.put(x, y, 0x2D0 | C)
+        elif kind == 'mat':
+            for i, v in enumerate((0x319, 0x31A, 0x31B)): m.put(x + i, y, v)
+            for i, v in enumerate((0x329, 0x32A, 0x32B)): m.put(x + i, y + 1, v)
     for w in L['j']['warp_events']: m.warps.append({'x': w['x'], 'y': w['y'], 'to': door_out[0], 'w': door_out[1]})
     return m
 
@@ -109,13 +123,16 @@ for (x, y) in [(11, 9), (21, 9), (30, 12), (11, 15), (5, 13), (20, 21)]: V.shrub
 for (x, y) in [(9, 13), (14, 12), (24, 13), (16, 16), (10, 22), (30, 15), (5, 22)]: V.put(x, y, mt(0x29F))
 V.put(31, 13, mt(0x003, 1)); V.signs.append({'x': 31, 'y': 13, 'text': 'ASHEN VILLAGE\nThe fire keeps the monsters away.'})
 V.put(10, 12, mt(0x003, 1)); V.signs.append({'x': 10, 'y': 12, 'text': "{P}'s home"})
-house_maps = {'home': ('AshenVillage_Home', 'FallarborTown_MoveRelearnersHouse'), 'elder': ('AshenVillage_Elder', 'FallarborTown_CozmosHouse'),
-              'lodge': ('AshenVillage_Lodge', 'FallarborTown_MoveRelearnersHouse'), 'hut4': ('AshenVillage_Hut4', 'FallarborTown_CozmosHouse'),
-              'hut5': ('AshenVillage_Hut5', 'FallarborTown_CozmosHouse')}
-for i, (k, (mn, src)) in enumerate(house_maps.items()):
+house_maps = {   # name, room shape, furniture
+    'home':  ('AshenVillage_Home',  'SecretBase_Tree1',      [('table', 5, 2), ('stump', 4, 3), ('stump', 8, 3), ('mat', 6, 5), ('plant', 2, 2)]),
+    'elder': ('AshenVillage_Elder', 'SecretBase_Shrub1',     [('mat', 4, 4), ('stump', 2, 4), ('stump', 8, 4), ('plant', 8, 2), ('plant', 1, 3), ('rock', 2, 2)]),
+    'lodge': ('AshenVillage_Lodge', 'SecretBase_BrownCave1', [('table', 6, 1), ('stump', 5, 2), ('stump', 9, 2), ('rock', 1, 3), ('rock', 9, 5), ('mat', 2, 5)]),
+    'hut4':  ('AshenVillage_Hut4',  'SecretBase_Shrub1',     [('table', 5, 2), ('stump', 4, 3), ('stool', 8, 3), ('mat', 2, 5), ('plant', 8, 5)]),
+    'hut5':  ('AshenVillage_Hut5',  'SecretBase_Tree1',      [('table', 4, 2), ('stump', 3, 3), ('stump', 7, 3), ('mat', 6, 5)])}
+for i, (k, (mn, src, furn)) in enumerate(house_maps.items()):
     V.warps.append({'x': doors[k][0], 'y': doors[k][1], 'to': 'S_' + mn, 'w': 0})
-    im = interior(mn, src, ('S_AshenVillage', i))
-    n, d = save(im, {'type': 'MAP_TYPE_INDOOR', 'border': [0, 0, 0, 0]}); MAPS[n] = d
+    im = interior(mn, src, ('S_AshenVillage', i), furn)
+    n, d = save(im, {'type': 'MAP_TYPE_INDOOR', 'border': [0x210, 0x210, 0x210, 0x210], 'title': ''}); MAPS[n] = d
 V.conns.append({'to': 'S_AshenFields', 'dir': 'right', 'off': -0})
 n, d = save(V, {'title': 'Ashen Village', 'music': 'town'}); MAPS[n] = d
 

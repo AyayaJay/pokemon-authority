@@ -5,6 +5,10 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 7, 2026 — build 1107-0116
+- **Story: huts look ancient now.** The modern Emerald rooms are replaced with rustic huts: woven-leaf walls with wooden floors (your home and the boy's hut), packed-dirt floors (the Elder's and the old woman's huts), and a stone den for the hunters' lodge. Furniture is log tables, tree-stump seats and woven mats.
+- No empty "S" name popup when entering a hut; no "Bike" key hint in Story mode.
+
 ## Nov 7, 2026 — build 1107-0106
 - **📖 Story mode (first preview)** — Chapter 1: The Ashen Tribe, set in ancient Sinnoh when Pokémon were just called "monsters".
   - New game: boy or girl, your name, and the three baby monsters (story default: Riolu, Froakie, Dreepy — or pick your own first-stage, non-legendary three).

@@ -17,6 +17,9 @@ def tsdir(name):
     for kind in ('primary', 'secondary'):
         p = P('data/tilesets', kind, snake(base))
         if os.path.isdir(p): return p
+    if base.startswith('SecretBase'):   # secret base variants: graphics in secret_base/<variant>, metatiles shared in secret_base/
+        p = P('data/tilesets/secondary/secret_base', snake(base[len('SecretBase'):]))
+        if os.path.isdir(p): return p
     raise SystemExit('missing tileset ' + name + ' -> ' + snake(base))
 def jasc(path):
     L = open(path).read().split('\n')[3:19]
@@ -30,7 +33,8 @@ def tileset(name):
     if tdata is None:  # grayscale: map brightness to index
         g = tiles.convert('L'); tdata = [15 - (v >> 4) for v in g.getdata()]
     pals = [jasc(f'{d}/palettes/{i:02d}.pal') for i in range(16)]
-    mt = open(d + '/metatiles.bin', 'rb').read(); at = open(d + '/metatile_attributes.bin', 'rb').read()
+    md = d if os.path.exists(d + '/metatiles.bin') else os.path.dirname(d)
+    mt = open(md + '/metatiles.bin', 'rb').read(); at = open(md + '/metatile_attributes.bin', 'rb').read()
     TS[name] = dict(d=d, tw=tw, tdata=tdata, tiles=tiles, ntiles=tw * (tiles.height // 8), pals=pals,
                     mt=struct.unpack('<%dH' % (len(mt) // 2), mt), at=struct.unpack('<%dH' % (len(at) // 2), at))
     return TS[name]
