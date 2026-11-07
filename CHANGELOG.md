@@ -5,6 +5,10 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 7, 2026 — build 1107-0123
+- **Story: Run 1 / Run 2** instead of a bicycle — ancient people are fast. Press B (phone: the orange » button) to switch; Run 2 is a sprint at about bike speed.
+- Story new-game screen: tapping "Story three" / "Choose my own" no longer pops up the keyboard for the name box, and the selected option is highlighted.
+
 ## Nov 7, 2026 — build 1107-0116
 - **Story: huts look ancient now.** The modern Emerald rooms are replaced with rustic huts: woven-leaf walls with wooden floors (your home and the boy's hut), packed-dirt floors (the Elder's and the old woman's huts), and a stone den for the hunters' lodge. Furniture is log tables, tree-stump seats and woven mats.
 - No empty "S" name popup when entering a hut; no "Bike" key hint in Story mode.
