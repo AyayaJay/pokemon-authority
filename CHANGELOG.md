@@ -5,6 +5,9 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 7, 2026 — build 1107-0935
+- Story: partner and wild monster moves now come only from their level-up list (up to Lv 30). Real attacks come first, and weaker attacks fill any empty slots. Existing saves get the new partner moves on load.
+
 ## Nov 7, 2026 — build 1107-0141
 - Story: your partner now starts with real attacks: a same-type attack plus attacks of other types, all up to 60 power. Existing saves get the new moves the next time you load.
 - Story: wild monsters in the Ashen Fields are now Lv 2–5 and are never above your first partner's level.
