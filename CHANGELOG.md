@@ -5,6 +5,11 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 7, 2026 — build 1107-0127
+- **Story: the gods' battle looks much better.** The sky darkens and dust falls; the sky tears open showing the starry void between worlds (glowing pink edges); Dialga and Palkia burst out with colored auras; Roar of Time and Spacial Rend collide with the real Spacial Rend vortex at the impact point; Giratina rises from a second, dark rift; a pink shockwave ends in white. Earthquake / Spacial Rend / Shadow Force sound effects.
+- Story: the kid no longer knows the gods' names at first — they're "the blue one", "the pale one" and "the shadow" until the Elder names them from the old songs.
+- Long dialog lines now wrap inside the text box (Korean text was running off the edge); name tags fit their text; the Run and Menu buttons hide during cutscenes.
+
 ## Nov 7, 2026 — build 1107-0123
 - **Story: Run 1 / Run 2** instead of a bicycle — ancient people are fast. Press B (phone: the orange » button) to switch; Run 2 is a sprint at about bike speed.
 - Story new-game screen: tapping "Story three" / "Choose my own" no longer pops up the keyboard for the name box, and the selected option is highlighted.
