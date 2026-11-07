@@ -5,6 +5,10 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 7, 2026 — build 1107-0941
+- Story & Test mode: after losing a wild battle you can choose "Try again" (same monster, your team back as it was before the fight) or "Go home and rest".
+- Story & Test mode: new RESTART option in the menu to start over from the very beginning (asks first).
+
 ## Nov 7, 2026 — build 1107-0935
 - Story: partner and wild monster moves now come only from their level-up list (up to Lv 30). Real attacks come first, and weaker attacks fill any empty slots. Existing saves get the new partner moves on load.
 
