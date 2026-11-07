@@ -152,7 +152,8 @@ for (x, y) in [(11, 7), (9, 21), (4, 22)]: F.put(x, y, mt(0x29F))
 F.put(12, 12, mt(0x003, 1)); F.signs.append({'x': 12, 'y': 12, 'text': 'EAST FIELDS\nTall grass ahead. Monsters hide there.'})
 F.conns.append({'to': 'S_AshenVillage', 'dir': 'left', 'off': 0})
 n, d = save(F, {'title': 'Ashen Fields', 'type': 'MAP_TYPE_ROUTE', 'music': 'grass',
-                'wild': {'rate': 20, 'mons': [['starly', 2, 4], ['bidoof', 2, 4], ['shinx', 2, 4], ['kricketot', 2, 3], ['budew', 2, 4], ['wurmple', 2, 3], ['buneary', 3, 4], ['zubat', 2, 4], ['burmy', 2, 3], ['pachirisu', 3, 5], ['stunky', 3, 5]]}})
+                # tutorial map: weak monsters + the common 3-stage birds. noBabies = your partner's kind never shows up here (later maps may have them)
+                'wild': {'rate': 20, 'noBabies': True, 'mons': [['pidgey', 2, 4], ['starly', 2, 4], ['fletchling', 2, 4], ['bidoof', 2, 4], ['kricketot', 2, 3], ['wurmple', 2, 3], ['burmy', 2, 3], ['caterpie', 2, 3], ['weedle', 2, 3], ['sentret', 2, 4]]}})
 MAPS[n] = d
 
 W0 = json.load(open(os.path.join(OUT, 'world.json')))

@@ -5,6 +5,10 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 7, 2026 — build 1107-1352
+- Story: new Ashen Fields monster list: weak monsters (Bidoof, Kricketot, Wurmple, Burmy, Caterpie, Weedle, Sentret) plus the common 3-stage birds (Pidgey, Starly, Fletchling).
+- Story: your partner's kind is only blocked on the tutorial map now. Later maps can have them for dex entries.
+
 ## Nov 7, 2026 — build 1107-0954
 - Story: new Healer's hut in Ashen Village (the bottom-left hut, with a sign out front). Talk to the healer to fully heal your monsters for free.
 - Story: Riolu no longer appears in the wild, and your partner's kind (any of your three babies) never shows up as a wild monster.
