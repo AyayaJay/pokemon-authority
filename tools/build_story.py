@@ -151,7 +151,7 @@ for (x, y) in [(11, 7), (9, 21), (4, 22)]: F.put(x, y, mt(0x29F))
 F.put(12, 12, mt(0x003, 1)); F.signs.append({'x': 12, 'y': 12, 'text': 'EAST FIELDS\nTall grass ahead. Monsters hide there.'})
 F.conns.append({'to': 'S_AshenVillage', 'dir': 'left', 'off': 0})
 n, d = save(F, {'title': 'Ashen Fields', 'type': 'MAP_TYPE_ROUTE', 'music': 'grass',
-                'wild': {'rate': 20, 'mons': [['starly', 3, 5], ['bidoof', 3, 5], ['shinx', 3, 5], ['kricketot', 3, 4], ['budew', 3, 5], ['wurmple', 2, 4], ['buneary', 4, 5], ['zubat', 3, 5], ['burmy', 3, 4], ['pachirisu', 4, 6], ['stunky', 5, 6], ['riolu', 6, 6]]}})
+                'wild': {'rate': 20, 'mons': [['starly', 2, 4], ['bidoof', 2, 4], ['shinx', 2, 4], ['kricketot', 2, 3], ['budew', 2, 4], ['wurmple', 2, 3], ['buneary', 3, 4], ['zubat', 2, 4], ['burmy', 2, 3], ['pachirisu', 3, 5], ['stunky', 3, 5], ['riolu', 4, 5]]}})
 MAPS[n] = d
 
 W0 = json.load(open(os.path.join(OUT, 'world.json')))

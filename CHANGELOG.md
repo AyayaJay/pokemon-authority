@@ -5,6 +5,10 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 7, 2026 — build 1107-0141
+- Story: your partner now starts with real attacks: a same-type attack plus attacks of other types, all up to 60 power. Existing saves get the new moves the next time you load.
+- Story: wild monsters in the Ashen Fields are now Lv 2–5 and are never above your first partner's level.
+
 ## Nov 7, 2026 — build 1107-0137
 - Story & Test mode: people on the next map no longer vanish when you cross a map border. They stay drawn and stay where they were.
 
