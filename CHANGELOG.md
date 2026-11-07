@@ -5,6 +5,9 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 7, 2026 — build 1107-0137
+- Story & Test mode: people on the next map no longer vanish when you cross a map border. They stay drawn and stay where they were.
+
 ## Nov 7, 2026 — build 1107-0130
 - Story: wild monsters now appear in the ash-covered grass of the Ashen Fields (it wasn't counted as tall grass before).
 
