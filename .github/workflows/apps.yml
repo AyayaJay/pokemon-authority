@@ -1,9 +1,6 @@
 name: Build apps
 on:
-  workflow_dispatch:
-  push:
-    branches: [main]
-    paths: ['app/**', '.github/workflows/apps.yml']   # the game itself updates inside the apps on its own; rebuild the apps only when they change
+  workflow_dispatch:   # manual only: Actions tab -> Build apps -> Run workflow
 permissions:
   contents: write
 jobs:

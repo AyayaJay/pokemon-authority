@@ -5,6 +5,12 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 6, 2026 — build 1106-2340
+- **Melee effects land with the hit**: each melee move's own animation (teeth for Bite, claws for Scratch, flaming fist for Fire Punch…) now plays at the moment of the hit, on whoever gets hit, about 35% bigger. The old curved slash on top of it is gone.
+- **Melee is long and narrow**: about twice the reach. Cone width depends on the move: bites 30°, punches 36°, most moves 50°, slicing moves 70°. The ground marker shows each move's real shape.
+- **Range markers are more see-through** (lighter fill, softer outline).
+- App builds are now manual only (the game itself still updates inside the apps automatically).
+
 ## Nov 6, 2026 — build 1106-1400
 - **Adventure is now called "🧪 Test mode"** (it's an early test of walking around and catching). Available on the website and in the apps.
 - Apps: the game now comes inside the app (APK about 3.5 MB), so the first launch works without internet. The game inside the apps still updates itself from the website when online.
