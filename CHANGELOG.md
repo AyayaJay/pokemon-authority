@@ -5,6 +5,9 @@ It is the date and time of the build: month, day, hour, minute (Pacific time).
 
 ---
 
+## Nov 7, 2026 — build 1107-2105
+- Battle: faster drawing when monsters flash from hits, glow, or are frozen/tinted. Each tinted sprite frame is now made once and reused instead of being re-filtered every frame. Big fights with lots of hits, like Arceus vs Dialga/Palkia/Giratina, ran very slowly on phones because of this.
+
 ## Nov 7, 2026 — build 1107-1352
 - Story: new Ashen Fields monster list: weak monsters (Bidoof, Kricketot, Wurmple, Burmy, Caterpie, Weedle, Sentret) plus the common 3-stage birds (Pidgey, Starly, Fletchling).
 - Story: your partner's kind is only blocked on the tutorial map now. Later maps can have them for dex entries.
